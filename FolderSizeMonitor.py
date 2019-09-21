@@ -11,8 +11,11 @@ class App:
         self.dirPathInputBox = tk.Entry( frame )
         self.dirPathInputBox.grid( row = 0, column = 0 )
         
-        self.scanButton = tk.Button( frame, text = "Scan", command = lambda: self.display( self.getDirInfoSortedLexically( self.dirPathInputBox.get() ) ) )
-        self.scanButton.grid( row = 0, column = 1 )
+        self.sortLexicallyButton = tk.Button( frame, text = "Sort Lexically", command = self.displayAndSortLexically )
+        self.sortLexicallyButton.grid( row = 0, column = 1 )
+        
+        self.sortBySizeButton = tk.Button( frame, text = "Sort By Size", command = self.displayAndSortBySize )
+        self.sortBySizeButton.grid( row = 0, column = 2 )
 
         self.dirContentTextBox = tk.Text( frame )
         self.dirContentTextBox.grid( row = 1, column = 0 )
@@ -34,6 +37,26 @@ class App:
             
             self.sizeTextBox.insert( tk.INSERT, str( entrySize ) + '\n' )
         
+    def displayAndSortLexically( self ):
+        
+        self.clearDisplays()
+        
+        self.display( self.getDirInfoSortedLexically( self.dirPathInputBox.get() ) )
+        
+    def displayAndSortBySize( self ):
+        
+        self.clearDisplays()
+        
+        self.display( self.getDirInfoSortedBySize( self.dirPathInputBox.get () ) )
+        
+    def clearDisplays( self ):
+        
+        self.dirContentTextBox.delete( 1.0, tk.END )
+        self.sizeTextBox.delete( 1.0, tk.END )
+        
+    """
+    :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
+    """
     def getDirInfoSortedLexically( self, targetDirPath ):
         
         entryNamesAndSizes = []
@@ -51,7 +74,21 @@ class App:
             entryNamesAndSizes.append( ( entry.name, entrySize ) )
                 
         return entryNamesAndSizes
+    
+    """
+    :return entryNamesAndSizes: A list of pairs of entry name and size, sorted by size.
+    """
+    def getDirInfoSortedBySize( self, targetDirPath ):
         
+        # TODO: Optimize?
+        entryNamesAndSizes = self.getDirInfoSortedLexically( targetDirPath )
+        
+        entryNamesAndSizes.sort( key = lambda item: item[1] )
+        
+        return entryNamesAndSizes
+        
+    """ Calculate a directory's size.
+    """
     def getDirSize( self, dirPath ):
         
         dirSize = 0
