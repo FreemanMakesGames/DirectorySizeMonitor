@@ -11,7 +11,7 @@ class App:
         self.dirPathInputBox = tk.Entry( frame )
         self.dirPathInputBox.grid( row = 0, column = 0 )
         
-        self.scanButton = tk.Button( frame, text = "Scan", command = self.performScan )
+        self.scanButton = tk.Button( frame, text = "Scan", command = lambda: self.display( self.getDirInfoSortedLexically( self.dirPathInputBox.get() ) ) )
         self.scanButton.grid( row = 0, column = 1 )
 
         self.dirContentTextBox = tk.Text( frame )
@@ -20,23 +20,37 @@ class App:
         self.sizeTextBox = tk.Text( frame )
         self.sizeTextBox.grid( row = 1, column = 1 )
         
-    def performScan( self ):
-
-        currentDirPath = self.dirPathInputBox.get()
+    """ Fill the text boxes with specified contents.
+    
+    An "entry" is either a file or a dir.
+    
+    :param entryNamesAndSizes: A list of pairs of entry name and size.
+    """
+    def display( self, entryNamesAndSizes ):
         
-        for entry in os.scandir( currentDirPath ):
+        for entryName, entrySize in entryNamesAndSizes:
             
-            self.dirContentTextBox.insert( tk.INSERT, entry.name + '\n' )
+            self.dirContentTextBox.insert( tk.INSERT, entryName + '\n' )
+            
+            self.sizeTextBox.insert( tk.INSERT, str( entrySize ) + '\n' )
+        
+    def getDirInfoSortedLexically( self, targetDirPath ):
+        
+        entryNamesAndSizes = []
+        
+        for entry in os.scandir( targetDirPath ):
         
             if entry.is_file():
         
-                sizeInBytes = os.path.getsize( entry )
+                entrySize = os.path.getsize( entry )
         
             elif entry.is_dir():
         
-                sizeInBytes = self.getDirSize( entry )
+                entrySize = self.getDirSize( entry )
                 
-            self.sizeTextBox.insert( tk.INSERT, str( sizeInBytes ) + '\n' )
+            entryNamesAndSizes.append( ( entry.name, entrySize ) )
+                
+        return entryNamesAndSizes
         
     def getDirSize( self, dirPath ):
         
