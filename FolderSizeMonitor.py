@@ -6,19 +6,19 @@ class App:
     def __init__( self, master ):
         
         frame = tk.Frame( master )
-        frame.grid( row=0, column=0 )
+        frame.grid( row = 0, column = 0 )
         
         self.dirPathInputBox = tk.Entry( frame )
-        self.dirPathInputBox.grid( row=0, column=0 )
+        self.dirPathInputBox.grid( row = 0, column = 0 )
         
-        self.scanButton = tk.Button( frame, text="Scan", command=self.performScan )
-        self.scanButton.grid( row=0, column=1 )
+        self.scanButton = tk.Button( frame, text = "Scan", command = self.performScan )
+        self.scanButton.grid( row = 0, column = 1 )
 
         self.dirContentTextBox = tk.Text( frame )
-        self.dirContentTextBox.grid( row=1, column=0 )
+        self.dirContentTextBox.grid( row = 1, column = 0 )
         
         self.sizeTextBox = tk.Text( frame )
-        self.sizeTextBox.grid( row=1, column=1 )
+        self.sizeTextBox.grid( row = 1, column = 1 )
         
     def performScan( self ):
 
@@ -34,11 +34,11 @@ class App:
         
             elif entry.is_dir():
         
-                sizeInBytes = getDirSize( entry )
+                sizeInBytes = self.getDirSize( entry )
                 
             self.sizeTextBox.insert( tk.INSERT, str( sizeInBytes ) + '\n' )
         
-    def getDirSize( dirPath ):
+    def getDirSize( self, dirPath ):
         
         dirSize = 0
         
