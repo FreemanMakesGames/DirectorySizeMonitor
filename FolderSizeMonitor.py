@@ -13,27 +13,40 @@ class App:
     
     def __init__( self, master ):
         
-        # UI
+        """ UI """
         
-        frame = tk.Frame( master )
-        frame.grid( row = 0, column = 0 )
+        masterFrame = tk.Frame( master )
+        masterFrame.grid( row = 0, column = 0 )
         
-        self.dirPathInputBox = tk.Entry( frame )
-        self.dirPathInputBox.grid( row = 0, column = 0 )
+        # Input
         
-        self.sortLexicallyButton = tk.Button( frame, text = "Sort Lexically", command = self.displayAndSortLexically )
-        self.sortLexicallyButton.grid( row = 0, column = 1 )
+        inputFrame = tk.Frame( masterFrame )
+        inputFrame.grid( row = 0, column = 0, sticky = tk.W )
         
-        self.sortBySizeButton = tk.Button( frame, text = "Sort By Size", command = self.displayAndSortBySize )
-        self.sortBySizeButton.grid( row = 0, column = 2 )
+        self.dirPathInputLabel = tk.Label( inputFrame, text = "Directory Path:" )
+        self.dirPathInputLabel.grid( row = 0, column = 0 )
+        
+        self.dirPathInputBox = tk.Entry( inputFrame )
+        self.dirPathInputBox.grid( row = 0, column = 1 )
+        
+        self.sortLexicallyButton = tk.Button( inputFrame, text = "Sort Lexically", command = self.displayAndSortLexically )
+        self.sortLexicallyButton.grid( row = 0, column = 2 )
+        
+        self.sortBySizeButton = tk.Button( inputFrame, text = "Sort By Size", command = self.displayAndSortBySize )
+        self.sortBySizeButton.grid( row = 0, column = 3 )
+        
+        # Display
+        
+        displayFrame = tk.Frame( masterFrame )
+        displayFrame.grid( row = 1, column = 0 )
 
-        self.dirContentTextBox = tk.Text( frame )
+        self.dirContentTextBox = tk.Text( displayFrame )
         self.dirContentTextBox.grid( row = 1, column = 0 )
         
-        self.sizeTextBox = tk.Text( frame )
+        self.sizeTextBox = tk.Text( displayFrame )
         self.sizeTextBox.grid( row = 1, column = 1 )
         
-        # Backend
+        """ Backend """
         
         self.displayedDirInfo = DisplayedDirInfo()
         
@@ -51,6 +64,11 @@ class App:
             
             self.sizeTextBox.insert( tk.INSERT, str( entrySize ) + '\n' )
         
+    """
+    Display and *always* sort, because displayed content may go unsorted.
+    The sorting functions will decide whether or not to recompute directory sizes,
+    Based on if target dir path is different from displayed dir path.
+    """
     def displayAndSortLexically( self ):
         
         self.clearDisplays()
@@ -63,6 +81,9 @@ class App:
         
         self.display( targetEntryNamesAndSizes )
         
+    """
+    ( Similar to displayAndSortLexically above )
+    """
     def displayAndSortBySize( self ):
         
         self.clearDisplays()
@@ -85,7 +106,11 @@ class App:
         self.displayedDirInfo.path = path
         self.displayedDirInfo.entryNamesAndSizes = entryNamesAndSizes
         
-    """
+    """ Get a directory's info from scratch.
+    
+    This is expensive because it calls getDirSize.
+    This should only be called if target dir path is different from displayed dir path.
+    
     :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
     """
     def getDirInfo( self, targetDirPath ):
@@ -107,6 +132,10 @@ class App:
         return entryNamesAndSizes
     
     """
+    Getting directory sizes is the most expensive computation here.
+    Only do it if target dir path is different from displayed dir path.
+    Always sort, which is relatively inexpensive.
+    
     :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
     """
     def getDirInfoSortedLexically( self, targetDirPath ):
@@ -124,7 +153,7 @@ class App:
         return entryNamesAndSizes
     
     """
-    :return entryNamesAndSizes: A list of pairs of entry name and size, sorted by size.
+    ( Similar to getDirInfoSortedLexically above )
     """
     def getDirInfoSortedBySize( self, targetDirPath ):
         
@@ -140,7 +169,10 @@ class App:
         
         return entryNamesAndSizes
         
-    """ Calculate a directory's size. """
+    """ Calculate a directory's size.
+    
+    This is expensive.
+    """
     def getDirSize( self, dirPath ):
         
         dirSize = 0
