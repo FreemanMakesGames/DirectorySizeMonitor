@@ -40,10 +40,10 @@ class App:
         displayFrame = tk.Frame( masterFrame )
         displayFrame.grid( row = 1, column = 0 )
 
-        self.dirContentTextBox = tk.Text( displayFrame )
+        self.dirContentTextBox = tk.Text( displayFrame, state = tk.DISABLED )
         self.dirContentTextBox.grid( row = 1, column = 0 )
         
-        self.sizeTextBox = tk.Text( displayFrame )
+        self.sizeTextBox = tk.Text( displayFrame, state = tk.DISABLED )
         self.sizeTextBox.grid( row = 1, column = 1 )
         
         """ Backend """
@@ -58,11 +58,15 @@ class App:
     """
     def display( self, entryNamesAndSizes ):
         
+        self.toggleTextBoxesEditing( True )
+        
         for entryName, entrySize in entryNamesAndSizes:
             
             self.dirContentTextBox.insert( tk.INSERT, entryName + '\n' )
             
             self.sizeTextBox.insert( tk.INSERT, str( entrySize ) + '\n' )
+            
+        self.toggleTextBoxesEditing( False )
         
     """
     Display and *always* sort, because displayed content may go unsorted.
@@ -98,8 +102,24 @@ class App:
         
     def clearDisplays( self ):
         
+        self.toggleTextBoxesEditing( True )
+        
         self.dirContentTextBox.delete( 1.0, tk.END )
         self.sizeTextBox.delete( 1.0, tk.END )
+        
+        self.toggleTextBoxesEditing( False )
+        
+    def toggleTextBoxesEditing( self, enabled ):
+        
+        if enabled:
+            
+            self.dirContentTextBox.config( state = tk.NORMAL )
+            self.sizeTextBox.config( state = tk.NORMAL )
+            
+        else:
+            
+            self.dirContentTextBox.config( state = tk.DISABLED )
+            self.sizeTextBox.config( state = tk.DISABLED )
         
     def setDisplayedDirInfo( self, path, entryNamesAndSizes ):
         
