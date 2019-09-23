@@ -1,9 +1,19 @@
 import os
 import tkinter as tk
+        
+class DisplayedDirInfo:
+    
+    def __init__( self ):
+        
+        self.path = ""
+        
+        self.entryNamesAndSizes = []
 
 class App:
     
     def __init__( self, master ):
+        
+        # UI
         
         frame = tk.Frame( master )
         frame.grid( row = 0, column = 0 )
@@ -23,6 +33,10 @@ class App:
         self.sizeTextBox = tk.Text( frame )
         self.sizeTextBox.grid( row = 1, column = 1 )
         
+        # Backend
+        
+        self.displayedDirInfo = DisplayedDirInfo()
+        
     """ Fill the text boxes with specified contents.
     
     An "entry" is either a file or a dir.
@@ -41,23 +55,40 @@ class App:
         
         self.clearDisplays()
         
-        self.display( self.getDirInfoSortedLexically( self.dirPathInputBox.get() ) )
+        targetDirPath = self.dirPathInputBox.get()
+        
+        targetEntryNamesAndSizes = self.getDirInfoSortedLexically( targetDirPath )
+        
+        self.setDisplayedDirInfo( targetDirPath, targetEntryNamesAndSizes )
+        
+        self.display( targetEntryNamesAndSizes )
         
     def displayAndSortBySize( self ):
         
         self.clearDisplays()
         
-        self.display( self.getDirInfoSortedBySize( self.dirPathInputBox.get () ) )
+        targetDirPath = self.dirPathInputBox.get()
+        
+        targetEntryNamesAndSizes = self.getDirInfoSortedBySize( targetDirPath )
+        
+        self.setDisplayedDirInfo( targetDirPath, targetEntryNamesAndSizes )
+        
+        self.display( targetEntryNamesAndSizes )
         
     def clearDisplays( self ):
         
         self.dirContentTextBox.delete( 1.0, tk.END )
         self.sizeTextBox.delete( 1.0, tk.END )
         
+    def setDisplayedDirInfo( self, path, entryNamesAndSizes ):
+        
+        self.displayedDirInfo.path = path
+        self.displayedDirInfo.entryNamesAndSizes = entryNamesAndSizes
+        
     """
     :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
     """
-    def getDirInfoSortedLexically( self, targetDirPath ):
+    def getDirInfo( self, targetDirPath ):
         
         entryNamesAndSizes = []
         
@@ -76,19 +107,40 @@ class App:
         return entryNamesAndSizes
     
     """
+    :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
+    """
+    def getDirInfoSortedLexically( self, targetDirPath ):
+        
+        if self.displayedDirInfo.path == targetDirPath:
+            
+            return sorted( self.displayedDirInfo.entryNamesAndSizes, key = lambda item: item[0].casefold() )
+        
+        else:
+            
+            entryNamesAndSizes = self.getDirInfo( targetDirPath )
+            
+        entryNamesAndSizes.sort( key = lambda item: item[0].casefold() )
+        
+        return entryNamesAndSizes
+    
+    """
     :return entryNamesAndSizes: A list of pairs of entry name and size, sorted by size.
     """
     def getDirInfoSortedBySize( self, targetDirPath ):
         
-        # TODO: Optimize?
-        entryNamesAndSizes = self.getDirInfoSortedLexically( targetDirPath )
+        if self.displayedDirInfo.path == targetDirPath:
+            
+            return sorted( self.displayedDirInfo.entryNamesAndSizes, key = lambda item: item[1] )
+            
+        else:
+            
+            entryNamesAndSizes = self.getDirInfo( targetDirPath )
         
         entryNamesAndSizes.sort( key = lambda item: item[1] )
         
         return entryNamesAndSizes
         
-    """ Calculate a directory's size.
-    """
+    """ Calculate a directory's size. """
     def getDirSize( self, dirPath ):
         
         dirSize = 0
