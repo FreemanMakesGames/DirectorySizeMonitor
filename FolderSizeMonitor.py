@@ -44,7 +44,7 @@ class App:
         displayFrame.grid( row = 1, column = 0 )
 
         self.dirInfoTreeview = ttk.Treeview( displayFrame )
-        self.dirInfoTreeview.config( show = ["headings"] )
+        self.dirInfoTreeview.config( show = ["headings"] )  # Hide the tree.
         self.dirInfoTreeview.config( columns = ( "content", "size" ) )
         self.dirInfoTreeview.heading( "content", text = "Content" )
         self.dirInfoTreeview.heading( "size", text = "Size" )
