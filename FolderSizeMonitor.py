@@ -43,18 +43,12 @@ class App:
         displayFrame = tk.Frame( masterFrame )
         displayFrame.grid( row = 1, column = 0 )
 
-        self.dirContentListbox = tk.Listbox( displayFrame, state = tk.DISABLED )
-        self.dirContentListbox.grid( row = 1, column = 0 )
-
-        self.sizeListbox = tk.Listbox( displayFrame, state = tk.DISABLED )
-        self.sizeListbox.grid( row = 1, column = 1 )
-
         self.dirInfoTreeview = ttk.Treeview( displayFrame )
         self.dirInfoTreeview.config( show = ["headings"] )
         self.dirInfoTreeview.config( columns = ( "content", "size" ) )
         self.dirInfoTreeview.heading( "content", text = "Content" )
         self.dirInfoTreeview.heading( "size", text = "Size" )
-        self.dirInfoTreeview.grid( row = 2, column = 0 )
+        self.dirInfoTreeview.grid( row = 0, column = 0 )
 
         """ Backend """
 
@@ -69,15 +63,11 @@ class App:
 
     def display( self, entryNamesAndSizes ):
 
-        self.toggleTextBoxesEditing( True )
-
         for entryName, entrySize in entryNamesAndSizes:
 
             self.dirInfoTreeview.insert( "", 0, entryName )
             self.dirInfoTreeview.set( entryName, "content", entryName )
             self.dirInfoTreeview.set( entryName, "size", str( entrySize ) )
-
-        self.toggleTextBoxesEditing( False )
 
     """
     Display and *always* sort, because displayed content may go unsorted.
@@ -115,24 +105,7 @@ class App:
 
     def clearDisplays( self ):
 
-        self.toggleTextBoxesEditing( True )
-
-        self.dirContentListbox.delete( 0, tk.END )
-        self.sizeListbox.delete( 0, tk.END )
-
-        self.toggleTextBoxesEditing( False )
-
-    def toggleTextBoxesEditing( self, enabled ):
-
-        if enabled:
-
-            self.dirContentListbox.config( state = tk.NORMAL )
-            self.sizeListbox.config( state = tk.NORMAL )
-
-        else:
-
-            self.dirContentListbox.config( state = tk.DISABLED )
-            self.sizeListbox.config( state = tk.DISABLED )
+        self.dirInfoTreeview.delete( *self.dirInfoTreeview.get_children() )
 
     def setDisplayedDirInfo( self, path, entryNamesAndSizes ):
 
