@@ -1,11 +1,13 @@
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
-
+import tkinter.filedialog as tkfiledialog
+import json
 
 class DisplayedDirInfo:
 
     def __init__( self ):
+
         self.path = ""
 
         self.entryNamesAndSizes = []
@@ -31,12 +33,14 @@ class App:
         self.dirPathInputBox = tk.Entry( inputFrame )
         self.dirPathInputBox.grid( row = 0, column = 1 )
 
-        self.sortLexicallyButton = tk.Button( inputFrame, text = "Sort Lexically",
-                                              command = self.displayAndSortLexically )
+        self.sortLexicallyButton = tk.Button( inputFrame, text = "Sort Lexically", command = self.displayAndSortLexically )
         self.sortLexicallyButton.grid( row = 0, column = 2 )
 
         self.sortBySizeButton = tk.Button( inputFrame, text = "Sort By Size", command = self.displayAndSortBySize )
         self.sortBySizeButton.grid( row = 0, column = 3 )
+
+        self.saveButton = tk.Button( inputFrame, text = "Save Result", command = self.saveResult )
+        self.saveButton.grid( row = 0, column = 4 )
 
         # Display
 
@@ -111,6 +115,18 @@ class App:
 
         self.displayedDirInfo.path = path
         self.displayedDirInfo.entryNamesAndSizes = entryNamesAndSizes
+
+    def saveResult( self ):
+
+        file = tkfiledialog.asksaveasfile( mode = 'w' )
+
+        # If the dialog is closed with "Cancel"
+        if file is None:
+            return
+
+        json.dump( self.displayedDirInfo.__dict__, file )
+
+        file.close()
 
     """ Get a directory's info from scratch.
     
