@@ -65,7 +65,7 @@ class App:
 
         for entryName, entrySize in entryNamesAndSizes:
 
-            self.dirInfoTreeview.insert( "", 0, entryName )
+            self.dirInfoTreeview.insert( "", tk.END, entryName )
             self.dirInfoTreeview.set( entryName, "content", entryName )
             self.dirInfoTreeview.set( entryName, "size", str( entrySize ) )
 
