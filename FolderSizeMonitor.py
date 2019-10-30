@@ -134,32 +134,51 @@ class App:
 
     def loadAndCompare( self ):
 
-        # Load
-
         file = tkfiledialog.askopenfile()
 
         # If the dialog is closed with "Cancel"
         if file is None:
             return
 
+        # Load and validate.
+
         try:
             loadedDirInfo = json.load( file )
         except ValueError:
-            tkmessagebox.showerror( "Error", "The file you opened doesn't seem to be saved from this program." )
+            tkmessagebox.showerror( "Error", "The file you opened is not of JSON format, thus it's not saved from this "
+                                             "program." )
             return
 
-        # Compare
+        # TODO: Refactor: '2' is hardcoded here.
+        if len( loadedDirInfo.keys() ) != 2:
+            tkmessagebox.showerror( "Error", "Although the file you opened is of JSON format, it's not saved from this "
+                                             "program." )
+            return
 
         try:
             loadedDirPath = loadedDirInfo[ "path" ]
         except KeyError:
-            tkmessagebox.showerror( "Error", "The result you loaded isn't from the same directory of what's currently "
+            tkmessagebox.showerror( "Error", "The result you loaded isn't about the same directory of what's currently "
                                              "displayed." )
             return
 
+        try:
+            loadedEntryNamesAndSizes = loadedDirInfo[ "entryNamesAndSizes" ]
+        except KeyError:
+            tkmessagebox.showerror( "Error", "The file is corrupted." )
+            return
+
+        # Compare.
+
         for entryNameAndSize in self.displayedDirInfo.entryNamesAndSizes:
 
-            print( entryNameAndSize )
+            if list( entryNameAndSize ) in loadedEntryNamesAndSizes:
+
+                pass
+
+            else:
+
+                print( "New entry: " + str( entryNameAndSize[ 0 ] ) )
 
         file.close()
 
