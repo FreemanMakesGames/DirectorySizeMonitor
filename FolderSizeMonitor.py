@@ -153,10 +153,13 @@ class App:
         try:
             loadedDirPath = loadedDirInfo[ "path" ]
         except KeyError:
-            tkmessagebox.showerror( "Error", "The result you loaded isn't from the same directory of what's currently displayed." )
+            tkmessagebox.showerror( "Error", "The result you loaded isn't from the same directory of what's currently "
+                                             "displayed." )
             return
 
-        
+        for entryNameAndSize in self.displayedDirInfo.entryNamesAndSizes:
+
+            print( entryNameAndSize )
 
         file.close()
 
@@ -182,7 +185,7 @@ class App:
 
                 entrySize = self.getDirSize( entry )
 
-            entryNamesAndSizes.append( ( entry.name,  ) )
+            entryNamesAndSizes.append( ( entry.name, entrySize  ) )
 
         return entryNamesAndSizes
 
