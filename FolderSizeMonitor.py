@@ -2,6 +2,7 @@ import os
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as tkfiledialog
+import tkinter.messagebox as tkmessagebox
 import json
 
 class DisplayedDirInfo:
@@ -10,7 +11,7 @@ class DisplayedDirInfo:
 
         self.path = ""
 
-        self.entryNamesAndSizes = []
+        self.entryNamesAndSizes = []  # An "entry" is either a file or a directory.
 
 
 class App:
@@ -41,6 +42,9 @@ class App:
 
         self.saveButton = tk.Button( inputFrame, text = "Save Result", command = self.saveResult )
         self.saveButton.grid( row = 0, column = 4 )
+
+        self.loadButton = tk.Button( inputFrame, text = "Load and Compare", command = self.loadAndCompare )
+        self.loadButton.grid( row = 0, column = 5 )
 
         # Display
 
@@ -124,7 +128,35 @@ class App:
         if file is None:
             return
 
-        json.dump( self.displayedDirInfo.__dict__, file )
+        json.dump( self.displayedDirInfo.__dict__, file, indent = 4 )
+
+        file.close()
+
+    def loadAndCompare( self ):
+
+        # Load
+
+        file = tkfiledialog.askopenfile()
+
+        # If the dialog is closed with "Cancel"
+        if file is None:
+            return
+
+        try:
+            loadedDirInfo = json.load( file )
+        except ValueError:
+            tkmessagebox.showerror( "Error", "The file you opened doesn't seem to be saved from this program." )
+            return
+
+        # Compare
+
+        try:
+            loadedDirPath = loadedDirInfo[ "path" ]
+        except KeyError:
+            tkmessagebox.showerror( "Error", "The result you loaded isn't from the same directory of what's currently displayed." )
+            return
+
+        
 
         file.close()
 
@@ -150,7 +182,7 @@ class App:
 
                 entrySize = self.getDirSize( entry )
 
-            entryNamesAndSizes.append( (entry.name, entrySize) )
+            entryNamesAndSizes.append( ( entry.name,  ) )
 
         return entryNamesAndSizes
 
