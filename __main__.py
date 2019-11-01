@@ -105,7 +105,7 @@ class MainWindow:
 
         targetDirPath = self.dirPathInputBox.get()
 
-        targetEntryInfos = self.getDirInfoSortedLexically( targetDirPath )
+        targetEntryInfos = self.getEntryInfosSortedLexically( targetDirPath )
 
         self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
 
@@ -121,7 +121,7 @@ class MainWindow:
 
         targetDirPath = self.dirPathInputBox.get()
 
-        targetEntryInfos = self.getDirInfoSortedBySize( targetDirPath )
+        targetEntryInfos = self.getEntryInfosSortedBySize( targetDirPath )
 
         self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
 
@@ -203,6 +203,9 @@ class MainWindow:
 
                 print( "New entry: " + str( entryInfo.name ) )
 
+        print( self.displayedDirInfo.entryInfos )
+        print( loadedEntryInfos )
+
         file.close()
 
         reportWindowWidget = tk.Tk()
@@ -237,7 +240,7 @@ class MainWindow:
 
         return entryInfos
 
-    def getDirInfoSortedLexically( self, targetDirPath ):
+    def getEntryInfosSortedLexically( self, targetDirPath ):
 
         """
         Getting directory sizes is the most expensive computation here.
@@ -259,7 +262,7 @@ class MainWindow:
 
         return entryInfos
 
-    def getDirInfoSortedBySize( self, targetDirPath ):
+    def getEntryInfosSortedBySize( self, targetDirPath ):
 
         """
         ( Similar to getDirInfoSortedLexically above )
