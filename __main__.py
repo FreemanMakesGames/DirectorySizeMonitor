@@ -1,4 +1,4 @@
-
+from reportwindow import ReportWindow
 
 import os
 import tkinter as tk
@@ -14,7 +14,6 @@ class DisplayedDirInfo:
         self.path = ""
 
         self.entryNamesAndSizes = []  # An "entry" is either a file or a directory.
-
 
 class MainWindow:
 
@@ -64,14 +63,14 @@ class MainWindow:
 
         self.displayedDirInfo = DisplayedDirInfo()
 
-    """ Fill the text boxes with specified contents.
-    
-    An "entry" is either a file or a dir.
-    
-    :param entryNamesAndSizes: A list of pairs of entry name and size.
-    """
-
     def display( self, entryNamesAndSizes ):
+
+        """ Fill the text boxes with specified contents.
+
+        An "entry" is either a file or a dir.
+
+        :param entryNamesAndSizes: A list of pairs of entry name and size.
+        """
 
         for entryName, entrySize in entryNamesAndSizes:
 
@@ -79,13 +78,13 @@ class MainWindow:
             self.dirInfoTreeview.set( entryName, "content", entryName )
             self.dirInfoTreeview.set( entryName, "size", str( entrySize ) )
 
-    """
-    Display and *always* sort, because displayed content may go unsorted.
-    The sorting functions will decide whether or not to recompute directory sizes,
-    Based on if target dir path is different from displayed dir path.
-    """
-
     def displayAndSortLexically( self ):
+
+        """
+        Display and *always* sort, because displayed content may go unsorted.
+        The sorting functions will decide whether or not to recompute directory sizes,
+        Based on if target dir path is different from displayed dir path.
+        """
 
         self.clearDisplays()
 
@@ -97,11 +96,11 @@ class MainWindow:
 
         self.display( targetEntryNamesAndSizes )
 
-    """
-    ( Similar to displayAndSortLexically above )
-    """
-
     def displayAndSortBySize( self ):
+
+        """
+        ( Similar to displayAndSortLexically above )
+        """
 
         self.clearDisplays()
 
@@ -160,9 +159,15 @@ class MainWindow:
         try:
             loadedDirPath = loadedDirInfo[ "path" ]
         except KeyError:
-            tkmessagebox.showerror( "Error", "The result you loaded isn't about the same directory of what's currently "
-                                             "displayed." )
+            tkmessagebox.showerror( "Error", "Although the file you opened is of JSON format, it's not saved from this "
+                                             "program." )
             return
+        else:
+            if ( loadedDirPath != self.displayedDirInfo.path ):
+                tkmessagebox.showerror( "Error",
+                                        "The result you loaded isn't describing the same directory of what's currently "
+                                        "displayed." )
+
 
         try:
             loadedEntryNamesAndSizes = loadedDirInfo[ "entryNamesAndSizes" ]
@@ -185,19 +190,20 @@ class MainWindow:
         file.close()
 
         reportWindowWidget = tk.Tk()
-        reportWindow = ReportWindow.ReportWindow( reportWindowWidget )
+        reportWindowWidget.title( "Report" )
+        reportWindow = ReportWindow( reportWindowWidget )
+
         reportWindowWidget.mainloop()
 
-
-    """ Get a directory's info from scratch.
-    
-    This is expensive because it calls getDirSize.
-    This should only be called if target dir path is different from displayed dir path.
-    
-    :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
-    """
-
     def getDirInfo( self, targetDirPath ):
+
+        """ Get a directory's info from scratch.
+
+        This is expensive because it calls getDirSize.
+        This should only be called if target dir path is different from displayed dir path.
+
+        :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
+        """
 
         entryNamesAndSizes = []
 
@@ -215,15 +221,15 @@ class MainWindow:
 
         return entryNamesAndSizes
 
-    """
-    Getting directory sizes is the most expensive computation here.
-    Only do it if target dir path is different from displayed dir path.
-    Always sort, which is relatively inexpensive.
-    
-    :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
-    """
-
     def getDirInfoSortedLexically( self, targetDirPath ):
+
+        """
+        Getting directory sizes is the most expensive computation here.
+        Only do it if target dir path is different from displayed dir path.
+        Always sort, which is relatively inexpensive.
+
+        :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
+        """
 
         if self.displayedDirInfo.path == targetDirPath:
 
@@ -237,11 +243,11 @@ class MainWindow:
 
         return entryNamesAndSizes
 
-    """
-    ( Similar to getDirInfoSortedLexically above )
-    """
-
     def getDirInfoSortedBySize( self, targetDirPath ):
+
+        """
+        ( Similar to getDirInfoSortedLexically above )
+        """
 
         if self.displayedDirInfo.path == targetDirPath:
 
@@ -255,12 +261,12 @@ class MainWindow:
 
         return entryNamesAndSizes
 
-    """ Calculate a directory's size.
-    
-    This is expensive.
-    """
-
     def getDirSize( self, dirPath ):
+
+        """ Calculate a directory's size.
+
+        This is expensive.
+        """
 
         dirSize = 0
 
