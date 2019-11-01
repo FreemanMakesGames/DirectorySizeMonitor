@@ -165,6 +165,8 @@ class MainWindow:
                                              "program." )
             return
 
+        file.close()
+
         # TODO: Refactor: '2' is hardcoded here.
         if len( loadedDirInfo.keys() ) != 2:
             tkmessagebox.showerror( "Error", "Although the file you opened is of JSON format, it's not saved from this "
@@ -193,20 +195,34 @@ class MainWindow:
 
         # Compare.
 
+        entryDeltas = [] # TODO: Refactoring: Should it use a new class, despite having the same data types as fields?
+
         for entryInfo in self.displayedDirInfo.entryInfos:
 
-            if entryInfo in loadedEntryInfos:
+            entryMatches = False
 
-                pass
+            for loadedEntryInfo in loadedEntryInfos:  # loadedEntryInfo is a dict.
 
-            else:
+                if entryInfo.name == loadedEntryInfo[ "name" ]:
 
-                print( "New entry: " + str( entryInfo.name ) )
+                    entryMatches = True
 
-        print( self.displayedDirInfo.entryInfos )
-        print( loadedEntryInfos )
+                    if entryInfo.size != loadedEntryInfo[ "size" ]:
 
-        file.close()
+                        entryDeltas.append( EntryInfo( entryInfo.name, entryInfo.size - loadedEntryInfo[ "size" ] ) )
+
+                    break
+
+            if not entryMatches:
+
+                entryDeltas.append( EntryInfo( entryInfo.name, entryInfo.size ) )
+
+        # TODO: Detect deleted entries.
+
+        # TODO: Program won't detect immediate changes to the directory, without scanning another directory first. A
+        #  rescan solution is needed.
+
+        print( entryDeltas )
 
         reportWindowWidget = tk.Tk()
         reportWindowWidget.title( "Report" )
