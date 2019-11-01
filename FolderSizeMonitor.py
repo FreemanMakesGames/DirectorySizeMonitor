@@ -1,3 +1,5 @@
+
+
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -14,7 +16,7 @@ class DisplayedDirInfo:
         self.entryNamesAndSizes = []  # An "entry" is either a file or a directory.
 
 
-class App:
+class MainWindow:
 
     def __init__( self, master ):
 
@@ -182,6 +184,11 @@ class App:
 
         file.close()
 
+        reportWindowWidget = tk.Tk()
+        reportWindow = ReportWindow.ReportWindow( reportWindowWidget )
+        reportWindowWidget.mainloop()
+
+
     """ Get a directory's info from scratch.
     
     This is expensive because it calls getDirSize.
@@ -268,9 +275,8 @@ class App:
 
         return dirSize
 
+mainWindowWidget = tk.Tk()
+mainWindowWidget.title( "Folder Size Monitor" )
+mainWindow = MainWindow( mainWindowWidget )
 
-window = tk.Tk()
-window.title( "Folder Size Monitor" )
-app = App( window )
-
-window.mainloop()
+mainWindowWidget.mainloop()
