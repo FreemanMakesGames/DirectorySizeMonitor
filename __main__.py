@@ -7,13 +7,25 @@ import tkinter.filedialog as tkfiledialog
 import tkinter.messagebox as tkmessagebox
 import json
 
-class DisplayedDirInfo:
+class EntryInfo:
 
-    def __init__( self ):
+    """
+    An "entry" is either a file or a directory.
+    """
 
-        self.path = ""
+    def __init__( self, name, size ):
 
-        self.entryNamesAndSizes = []  # An "entry" is either a file or a directory.
+        self.name = name
+
+        self.size = size
+
+class DirInfo:
+
+    def __init__( self, path, entryInfos ):
+
+        self.path = path
+
+        self.entryInfos = entryInfos
 
 class MainWindow:
 
@@ -61,18 +73,21 @@ class MainWindow:
 
         """ Backend """
 
-        self.displayedDirInfo = DisplayedDirInfo()
+        self.displayedDirInfo = DirInfo( "", [] )
 
-    def display( self, entryNamesAndSizes ):
+    def display( self, entryInfos ):
 
         """ Fill the text boxes with specified contents.
 
         An "entry" is either a file or a dir.
 
-        :param entryNamesAndSizes: A list of pairs of entry name and size.
+        :param entryInfos: A list of EntryInfo
         """
 
-        for entryName, entrySize in entryNamesAndSizes:
+        for entryInfo in entryInfos:
+
+            entryName = entryInfo.name
+            entrySize = entryInfo.size
 
             self.dirInfoTreeview.insert( "", tk.END, entryName )
             self.dirInfoTreeview.set( entryName, "content", entryName )
@@ -90,11 +105,11 @@ class MainWindow:
 
         targetDirPath = self.dirPathInputBox.get()
 
-        targetEntryNamesAndSizes = self.getDirInfoSortedLexically( targetDirPath )
+        targetEntryInfos = self.getDirInfoSortedLexically( targetDirPath )
 
-        self.setDisplayedDirInfo( targetDirPath, targetEntryNamesAndSizes )
+        self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
 
-        self.display( targetEntryNamesAndSizes )
+        self.display( targetEntryInfos )
 
     def displayAndSortBySize( self ):
 
@@ -106,20 +121,20 @@ class MainWindow:
 
         targetDirPath = self.dirPathInputBox.get()
 
-        targetEntryNamesAndSizes = self.getDirInfoSortedBySize( targetDirPath )
+        targetEntryInfos = self.getDirInfoSortedBySize( targetDirPath )
 
-        self.setDisplayedDirInfo( targetDirPath, targetEntryNamesAndSizes )
+        self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
 
-        self.display( targetEntryNamesAndSizes )
+        self.display( targetEntryInfos )
 
     def clearDisplays( self ):
 
         self.dirInfoTreeview.delete( *self.dirInfoTreeview.get_children() )
 
-    def setDisplayedDirInfo( self, path, entryNamesAndSizes ):
+    def setDisplayedDirInfo( self, path, entryInfos ):
 
         self.displayedDirInfo.path = path
-        self.displayedDirInfo.entryNamesAndSizes = entryNamesAndSizes
+        self.displayedDirInfo.entryInfos = entryInfos
 
     def saveResult( self ):
 
@@ -129,7 +144,7 @@ class MainWindow:
         if file is None:
             return
 
-        json.dump( self.displayedDirInfo.__dict__, file, indent = 4 )
+        json.dump( self.displayedDirInfo.__dict__, file, default = lambda o: o.__dict__, indent = 4 )
 
         file.close()
 
@@ -167,31 +182,32 @@ class MainWindow:
                 tkmessagebox.showerror( "Error",
                                         "The result you loaded isn't describing the same directory of what's currently "
                                         "displayed." )
+                return
 
 
         try:
-            loadedEntryNamesAndSizes = loadedDirInfo[ "entryNamesAndSizes" ]
+            loadedEntryInfos = loadedDirInfo[ "entryInfos" ]
         except KeyError:
             tkmessagebox.showerror( "Error", "The file is corrupted." )
             return
 
         # Compare.
 
-        for entryNameAndSize in self.displayedDirInfo.entryNamesAndSizes:
+        for entryInfo in self.displayedDirInfo.entryInfos:
 
-            if list( entryNameAndSize ) in loadedEntryNamesAndSizes:
+            if entryInfo in loadedEntryInfos:
 
                 pass
 
             else:
 
-                print( "New entry: " + str( entryNameAndSize[ 0 ] ) )
+                print( "New entry: " + str( entryInfo.name ) )
 
         file.close()
 
         reportWindowWidget = tk.Tk()
         reportWindowWidget.title( "Report" )
-        reportWindow = ReportWindow( reportWindowWidget )
+        reportWindow = ReportWindow( reportWindowWidget, [] )
 
         reportWindowWidget.mainloop()
 
@@ -205,7 +221,7 @@ class MainWindow:
         :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
         """
 
-        entryNamesAndSizes = []
+        entryInfos = []
 
         for entry in os.scandir( targetDirPath ):
 
@@ -217,9 +233,9 @@ class MainWindow:
 
                 entrySize = self.getDirSize( entry )
 
-            entryNamesAndSizes.append( ( entry.name, entrySize  ) )
+            entryInfos.append( EntryInfo( entry.name, entrySize  ) )
 
-        return entryNamesAndSizes
+        return entryInfos
 
     def getDirInfoSortedLexically( self, targetDirPath ):
 
@@ -233,15 +249,15 @@ class MainWindow:
 
         if self.displayedDirInfo.path == targetDirPath:
 
-            return sorted( self.displayedDirInfo.entryNamesAndSizes, key = lambda item: item[0].casefold() )
+            return sorted( self.displayedDirInfo.entryInfos, key = lambda item: item.name.casefold() )
 
         else:
 
-            entryNamesAndSizes = self.getDirInfo( targetDirPath )
+            entryInfos = self.getDirInfo( targetDirPath )
 
-        entryNamesAndSizes.sort( key = lambda item: item[0].casefold() )
+        entryInfos.sort( key = lambda item: item.name.casefold() )
 
-        return entryNamesAndSizes
+        return entryInfos
 
     def getDirInfoSortedBySize( self, targetDirPath ):
 
@@ -251,15 +267,15 @@ class MainWindow:
 
         if self.displayedDirInfo.path == targetDirPath:
 
-            return sorted( self.displayedDirInfo.entryNamesAndSizes, key = lambda item: item[1] )
+            return sorted( self.displayedDirInfo.entryInfos, key = lambda item: item.size )
 
         else:
 
-            entryNamesAndSizes = self.getDirInfo( targetDirPath )
+            entryInfos = self.getDirInfo( targetDirPath )
 
-        entryNamesAndSizes.sort( key = lambda item: item[1] )
+        entryInfos.sort( key = lambda item: item.size )
 
-        return entryNamesAndSizes
+        return entryInfos
 
     def getDirSize( self, dirPath ):
 

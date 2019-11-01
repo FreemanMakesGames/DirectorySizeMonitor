@@ -3,7 +3,7 @@ import tkinter.ttk as ttk
 
 class ReportWindow:
 
-    def __init__( self, master, entryNamesAndDeltas ):
+    def __init__( self, master, entryInfos ):
 
         masterFrame = tk.Frame( master )
         masterFrame.grid( row = 0, column = 0 )
