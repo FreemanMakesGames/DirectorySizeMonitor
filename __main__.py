@@ -41,30 +41,24 @@ class MainWindow:
         inputFrame = tk.Frame( masterFrame )
         inputFrame.grid( row = 0, column = 0, sticky = tk.W )
 
-        self.dirPathInputLabel = tk.Label( inputFrame, text = "Directory Path:" )
-        self.dirPathInputLabel.grid( row = 0, column = 0 )
-
-        self.dirPathInputBox = tk.Entry( inputFrame )
-        self.dirPathInputBox.grid( row = 0, column = 1 )
-
         self.scanButton = tk.Button( inputFrame, text = "Scan", command = self.onScanButtonClicked )
-        self.scanButton.grid( row = 0, column = 2 )
+        self.scanButton.grid( row = 0, column = 0 )
 
         self.sortLexicallyButton = tk.Button( inputFrame, text = "Sort Lexically",
                                               command = lambda:
                                               self.onSortButtonClicked( self.getEntryInfosSortedLexically ) )
-        self.sortLexicallyButton.grid( row = 0, column = 3 )
+        self.sortLexicallyButton.grid( row = 0, column = 1 )
 
         self.sortBySizeButton = tk.Button( inputFrame, text = "Sort By Size",
                                            command = lambda:
                                            self.onSortButtonClicked( self.getEntryInfosSortedBySize ) )
-        self.sortBySizeButton.grid( row = 0, column = 4 )
+        self.sortBySizeButton.grid( row = 0, column = 2 )
 
         self.saveButton = tk.Button( inputFrame, text = "Save Result", command = self.saveResult )
-        self.saveButton.grid( row = 0, column = 5 )
+        self.saveButton.grid( row = 0, column = 3 )
 
         self.loadButton = tk.Button( inputFrame, text = "Load and Compare", command = self.loadAndCompare )
-        self.loadButton.grid( row = 0, column = 6 )
+        self.loadButton.grid( row = 0, column = 4 )
 
         # Display
 
@@ -80,41 +74,33 @@ class MainWindow:
 
         """ Backend """
 
-        self.displayedDirInfo = DirInfo( "", [] )
+        self.currentDirInfo = DirInfo( "", [] )
 
     def onScanButtonClicked( self ):
 
-        targetDirPath = self.dirPathInputBox.get()
+        targetDirPath = tkfiledialog.askdirectory()
 
-        if not os.path.isdir( targetDirPath ):
-            tkmessagebox.showerror( "Error", "The directory path you input is invalid." )
+        # If the dialog is closed with "Cancel"
+        if targetDirPath == "":
             return
 
         self.clearDisplays()
 
         targetEntryInfos = self.getDirInfo( targetDirPath )
 
-        self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
+        self.setCurrentDirInfo( targetDirPath, targetEntryInfos )
 
         self.display( targetEntryInfos )
 
     def onSortButtonClicked( self, sortingFunction ):
 
-        targetDirPath = self.dirPathInputBox.get()
-
-        if self.displayedDirInfo.path == "":
+        if self.currentDirInfo.path == "":
             tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
-            return
-
-        if targetDirPath != self.displayedDirInfo.path:
-            tkmessagebox.showerror( "Error", "You have input a new directory path. You need to scan it first." )
             return
 
         self.clearDisplays()
 
-        targetEntryInfos = sortingFunction( targetDirPath )
-
-        self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
+        targetEntryInfos = sortingFunction()
 
         self.display( targetEntryInfos )
 
@@ -140,10 +126,10 @@ class MainWindow:
 
         self.dirInfoTreeview.delete( *self.dirInfoTreeview.get_children() )
 
-    def setDisplayedDirInfo( self, path, entryInfos ):
+    def setCurrentDirInfo( self, path, entryInfos ):
 
-        self.displayedDirInfo.path = path
-        self.displayedDirInfo.entryInfos = entryInfos
+        self.currentDirInfo.path = path
+        self.currentDirInfo.entryInfos = entryInfos
 
     def saveResult( self ):
 
@@ -153,7 +139,7 @@ class MainWindow:
         if file is None:
             return
 
-        json.dump( self.displayedDirInfo.__dict__, file, default = lambda o: o.__dict__, indent = 4 )
+        json.dump( self.currentDirInfo.__dict__, file, default = lambda o: o.__dict__, indent = 4 )
 
         file.close()
 
@@ -189,7 +175,7 @@ class MainWindow:
                                              "program." )
             return
         else:
-            if ( loadedDirPath != self.displayedDirInfo.path ):
+            if ( loadedDirPath != self.currentDirInfo.path):
                 tkmessagebox.showerror( "Error",
                                         "The result you loaded isn't describing the same directory of what's currently "
                                         "displayed." )
@@ -206,7 +192,7 @@ class MainWindow:
 
         entryDeltas = [] # TODO: Refactoring: Should it use a new class, despite having the same data types as fields?
 
-        for entryInfo in self.displayedDirInfo.entryInfos:
+        for entryInfo in self.currentDirInfo.entryInfos:
 
             entryMatches = False
 
@@ -264,13 +250,13 @@ class MainWindow:
 
         return entryInfos
 
-    def getEntryInfosSortedLexically( self, targetDirPath ):
+    def getEntryInfosSortedLexically( self ):
 
-        return sorted( self.displayedDirInfo.entryInfos, key = lambda item: item.name.casefold() )
+        return sorted( self.currentDirInfo.entryInfos, key = lambda item: item.name.casefold() )
 
-    def getEntryInfosSortedBySize( self, targetDirPath ):
+    def getEntryInfosSortedBySize( self ):
 
-        return sorted( self.displayedDirInfo.entryInfos, key = lambda item: item.size )
+        return sorted( self.currentDirInfo.entryInfos, key = lambda item: item.size )
 
     def getDirSize( self, dirPath ):
 
