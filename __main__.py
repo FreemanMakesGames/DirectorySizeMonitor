@@ -47,17 +47,24 @@ class MainWindow:
         self.dirPathInputBox = tk.Entry( inputFrame )
         self.dirPathInputBox.grid( row = 0, column = 1 )
 
-        self.sortLexicallyButton = tk.Button( inputFrame, text = "Sort Lexically", command = self.displayAndSortLexically )
-        self.sortLexicallyButton.grid( row = 0, column = 2 )
+        self.scanButton = tk.Button( inputFrame, text = "Scan", command = self.onScanButtonClicked )
+        self.scanButton.grid( row = 0, column = 2 )
 
-        self.sortBySizeButton = tk.Button( inputFrame, text = "Sort By Size", command = self.displayAndSortBySize )
-        self.sortBySizeButton.grid( row = 0, column = 3 )
+        self.sortLexicallyButton = tk.Button( inputFrame, text = "Sort Lexically",
+                                              command = lambda:
+                                              self.onSortButtonClicked( self.getEntryInfosSortedLexically ) )
+        self.sortLexicallyButton.grid( row = 0, column = 3 )
+
+        self.sortBySizeButton = tk.Button( inputFrame, text = "Sort By Size",
+                                           command = lambda:
+                                           self.onSortButtonClicked( self.getEntryInfosSortedBySize ) )
+        self.sortBySizeButton.grid( row = 0, column = 4 )
 
         self.saveButton = tk.Button( inputFrame, text = "Save Result", command = self.saveResult )
-        self.saveButton.grid( row = 0, column = 4 )
+        self.saveButton.grid( row = 0, column = 5 )
 
         self.loadButton = tk.Button( inputFrame, text = "Load and Compare", command = self.loadAndCompare )
-        self.loadButton.grid( row = 0, column = 5 )
+        self.loadButton.grid( row = 0, column = 6 )
 
         # Display
 
@@ -74,6 +81,42 @@ class MainWindow:
         """ Backend """
 
         self.displayedDirInfo = DirInfo( "", [] )
+
+    def onScanButtonClicked( self ):
+
+        targetDirPath = self.dirPathInputBox.get()
+
+        if not os.path.isdir( targetDirPath ):
+            tkmessagebox.showerror( "Error", "The directory path you input is invalid." )
+            return
+
+        self.clearDisplays()
+
+        targetEntryInfos = self.getDirInfo( targetDirPath )
+
+        self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
+
+        self.display( targetEntryInfos )
+
+    def onSortButtonClicked( self, sortingFunction ):
+
+        targetDirPath = self.dirPathInputBox.get()
+
+        if self.displayedDirInfo.path == "":
+            tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
+            return
+
+        if targetDirPath != self.displayedDirInfo.path:
+            tkmessagebox.showerror( "Error", "You have input a new directory path. You need to scan it first." )
+            return
+
+        self.clearDisplays()
+
+        targetEntryInfos = sortingFunction( targetDirPath )
+
+        self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
+
+        self.display( targetEntryInfos )
 
     def display( self, entryInfos ):
 
@@ -92,40 +135,6 @@ class MainWindow:
             self.dirInfoTreeview.insert( "", tk.END, entryName )
             self.dirInfoTreeview.set( entryName, "content", entryName )
             self.dirInfoTreeview.set( entryName, "size", str( entrySize ) )
-
-    def displayAndSortLexically( self ):
-
-        """
-        Display and *always* sort, because displayed content may go unsorted.
-        The sorting functions will decide whether or not to recompute directory sizes,
-        Based on if target dir path is different from displayed dir path.
-        """
-
-        self.clearDisplays()
-
-        targetDirPath = self.dirPathInputBox.get()
-
-        targetEntryInfos = self.getEntryInfosSortedLexically( targetDirPath )
-
-        self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
-
-        self.display( targetEntryInfos )
-
-    def displayAndSortBySize( self ):
-
-        """
-        ( Similar to displayAndSortLexically above )
-        """
-
-        self.clearDisplays()
-
-        targetDirPath = self.dirPathInputBox.get()
-
-        targetEntryInfos = self.getEntryInfosSortedBySize( targetDirPath )
-
-        self.setDisplayedDirInfo( targetDirPath, targetEntryInfos )
-
-        self.display( targetEntryInfos )
 
     def clearDisplays( self ):
 
@@ -235,7 +244,6 @@ class MainWindow:
         """ Get a directory's info from scratch.
 
         This is expensive because it calls getDirSize.
-        This should only be called if target dir path is different from displayed dir path.
 
         :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
         """
@@ -258,43 +266,11 @@ class MainWindow:
 
     def getEntryInfosSortedLexically( self, targetDirPath ):
 
-        """
-        Getting directory sizes is the most expensive computation here.
-        Only do it if target dir path is different from displayed dir path.
-        Always sort, which is relatively inexpensive.
-
-        :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
-        """
-
-        if self.displayedDirInfo.path == targetDirPath:
-
-            return sorted( self.displayedDirInfo.entryInfos, key = lambda item: item.name.casefold() )
-
-        else:
-
-            entryInfos = self.getDirInfo( targetDirPath )
-
-        entryInfos.sort( key = lambda item: item.name.casefold() )
-
-        return entryInfos
+        return sorted( self.displayedDirInfo.entryInfos, key = lambda item: item.name.casefold() )
 
     def getEntryInfosSortedBySize( self, targetDirPath ):
 
-        """
-        ( Similar to getDirInfoSortedLexically above )
-        """
-
-        if self.displayedDirInfo.path == targetDirPath:
-
-            return sorted( self.displayedDirInfo.entryInfos, key = lambda item: item.size )
-
-        else:
-
-            entryInfos = self.getDirInfo( targetDirPath )
-
-        entryInfos.sort( key = lambda item: item.size )
-
-        return entryInfos
+        return sorted( self.displayedDirInfo.entryInfos, key = lambda item: item.size )
 
     def getDirSize( self, dirPath ):
 
