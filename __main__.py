@@ -190,7 +190,7 @@ class MainWindow:
 
         # Compare.
 
-        entryDeltas = [] # TODO: Refactoring: Should it use a new class, despite having the same data types as fields?
+        entryDeltas = []  # TODO: Refactoring: Should it use a new class, despite having the same data types as fields?
 
         for entryInfo in self.currentDirInfo.entryInfos:
 
@@ -212,7 +212,21 @@ class MainWindow:
 
                 entryDeltas.append( EntryInfo( entryInfo.name, entryInfo.size ) )
 
-        # TODO: Detect deleted entries.
+        for loadedEntryInfo in loadedEntryInfos:
+
+            entryDeleted = True
+
+            for entryInfo in self.currentDirInfo.entryInfos:
+
+                if loadedEntryInfo[ "name" ] == entryInfo.name:
+
+                    entryDeleted = False
+
+                    break
+
+            if entryDeleted:
+
+                entryDeltas.append( EntryInfo( loadedEntryInfo[ "name" ], -loadedEntryInfo[ "size" ] ) )
 
         print( entryDeltas )
 
