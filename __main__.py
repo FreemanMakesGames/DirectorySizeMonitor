@@ -214,14 +214,11 @@ class MainWindow:
 
         # TODO: Detect deleted entries.
 
-        # TODO: Program won't detect immediate changes to the directory, without scanning another directory first. A
-        #  rescan solution is needed.
-
         print( entryDeltas )
 
         reportWindowWidget = tk.Tk()
         reportWindowWidget.title( "Report" )
-        reportWindow = ReportWindow( reportWindowWidget, [] )
+        reportWindow = ReportWindow( reportWindowWidget, entryDeltas )
 
         reportWindowWidget.mainloop()
 
