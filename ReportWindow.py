@@ -16,6 +16,7 @@ class ReportWindow:
         self.reportTreeview.grid( row = 0, column = 0 )
 
         # TODO: Refactoring: Duplicate code in __main.py__ display function.
+		#		Solution: Make a subclass of Treeview, which adds this display function.
         for entryDelta in entryDeltas:
 
             entryName = entryDelta.name

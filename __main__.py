@@ -60,6 +60,17 @@ class MainWindow:
         self.loadButton = tk.Button( inputFrame, text = "Load and Compare", command = self.loadAndCompare )
         self.loadButton.grid( row = 0, column = 4 )
 
+        # Unit options
+        self.unitOptionsLabel = tk.Label( inputFrame, text = "Unit" )
+        self.unitOptionsLabel.grid( row = 1, column = 0 )
+        self.unitDivisor = 1
+        self.unitOptions = [ "B", "KB", "MB", "GB" ]
+        self.unitOption = tk.StringVar()
+        self.unitOption.set( self.unitOptions[ 0 ] )
+        self.unitOptionsMenu = tk.OptionMenu( inputFrame, self.unitOption, *self.unitOptions, command = lambda selected:
+                                              self.onUnitSelected( selected ) )
+        self.unitOptionsMenu.grid( row = 1, column = 1 )
+
         # Display
 
         displayFrame = tk.Frame( masterFrame )
@@ -104,6 +115,12 @@ class MainWindow:
 
         self.display( targetEntryInfos )
 
+    def onUnitSelected( self, selected ):
+
+        self.unitDivisor = 1024 ** self.unitOptions.index( selected )
+
+        print( self.unitDivisor )
+
     def display( self, entryInfos ):
 
         """ Fill the text boxes with specified contents.
@@ -125,11 +142,6 @@ class MainWindow:
     def clearDisplays( self ):
 
         self.dirInfoTreeview.delete( *self.dirInfoTreeview.get_children() )
-
-    def setCurrentDirInfo( self, path, entryInfos ):
-
-        self.currentDirInfo.path = path
-        self.currentDirInfo.entryInfos = entryInfos
 
     def saveResult( self ):
 
@@ -288,6 +300,11 @@ class MainWindow:
                     dirSize += os.path.getsize( filePath )
 
         return dirSize
+
+    def setCurrentDirInfo( self, path, entryInfos ):
+
+        self.currentDirInfo.path = path
+        self.currentDirInfo.entryInfos = entryInfos
 
 mainWindowWidget = tk.Tk()
 mainWindowWidget.title( "Folder Size Monitor" )
