@@ -134,7 +134,7 @@ class MainWindow:
 
             self.dirInfoTreeview.insert( "", tk.END, entryName )
             self.dirInfoTreeview.set( entryName, "content", entryName )
-            self.dirInfoTreeview.set( entryName, "size", str( entrySize / self.unitDivisor ) )
+            self.dirInfoTreeview.set( entryName, "size", str( entrySize / self.unitDivisor ) + self.unitOption.get() )
 
     def clearDisplays( self ):
 
