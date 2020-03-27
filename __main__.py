@@ -23,6 +23,12 @@ class DirInfo:
         self.path = path
         self.entryInfos = entryInfos
 
+class ScanResult:
+
+    def __init__( self, dirInfo, depth ):
+        self.dirInfo = dirInfo
+        self.depth = depth
+
 class MainWindow:
 
     def __init__( self, master ):
@@ -92,7 +98,7 @@ class MainWindow:
 
         """ Backend """
 
-        self.currentDirInfo = DirInfo( "", [] )
+        self.currentScanResult = ScanResult( DirInfo( "", [] ), self.depth )
 
         self.MAXDEPTH = 5
 
@@ -122,14 +128,14 @@ class MainWindow:
 
         targetEntryInfos = self.getDirInfo( targetDirPath, 1 )
 
-        self.setCurrentDirInfo( targetDirPath, targetEntryInfos )
+        self.setCurrentScanResult( targetDirPath, targetEntryInfos, self.depth )
 
         self.clearDisplays()
         self.display( targetEntryInfos )
 
     def onSortButtonClicked( self, sortingFunction ):
 
-        if self.currentDirInfo.path == "":
+        if self.currentScanResult.dirInfo.path == "":
             tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
             return
 
@@ -144,7 +150,7 @@ class MainWindow:
         self.unitDivisor = 1024 ** self.unitOptions.index( selected )
 
         self.clearDisplays()
-        self.display( self.currentDirInfo.entryInfos )
+        self.display( self.currentScanResult.dirInfo.entryInfos )
 
     def display( self, entryInfos ):
 
@@ -179,7 +185,7 @@ class MainWindow:
         if file is None:
             return
 
-        json.dump( self.currentDirInfo.__dict__, file, default = lambda o: o.__dict__, indent = 4 )
+        json.dump( self.currentScanResult.__dict__, file, default = lambda o: o.__dict__, indent = 4 )
 
         file.close()
 
@@ -194,7 +200,7 @@ class MainWindow:
         # Load and validate.
 
         try:
-            loadedDirInfo = json.load( file )
+            loadedScanResult = json.load( file )
         except ValueError:
             tkmessagebox.showerror( "Error", "The file you opened is not of JSON format, thus it's not saved from this "
                                              "program." )
@@ -202,25 +208,34 @@ class MainWindow:
 
         file.close()
 
-        # TODO: Refactor: '2' is hardcoded here.
-        if len( loadedDirInfo.keys() ) != 2:
-            tkmessagebox.showerror( "Error", "Although the file you opened is of JSON format, it's not saved from this "
-                                             "program." )
+        try:
+            loadedDirInfo = loadedScanResult[ "dirInfo" ]
+        except KeyError:
+            self.reportUnknownJson()
             return
 
         try:
             loadedDirPath = loadedDirInfo[ "path" ]
         except KeyError:
-            tkmessagebox.showerror( "Error", "Although the file you opened is of JSON format, it's not saved from this "
-                                             "program." )
+            self.reportUnknownJson()
             return
         else:
-            if ( loadedDirPath != self.currentDirInfo.path):
-                tkmessagebox.showerror( "Error",
-                                        "The result you loaded isn't describing the same directory of what's currently "
-                                        "displayed." )
+            if ( loadedDirPath != self.currentScanResult.dirInfo.path):
+                tkmessagebox.showerror( "Error", "The result you loaded isn't describing the same directory of what's"
+                                                 "currently displayed." )
                 return
 
+        try:
+            loadedDepth = loadedScanResult[ "depth" ]
+        except KeyError:
+            self.reportUnknownJson()
+            return
+        else:
+            if ( loadedDepth != self.currentScanResult.depth ):
+                tkmessagebox.showerror( "Error", "The result you loaded is describing the same directory of"
+                                                 "what's currently displayed, but the depth isn't the same."
+                                                 "So it can't be compared." )
+                return
 
         try:
             loadedEntryInfos = loadedDirInfo[ "entryInfos" ]
@@ -232,7 +247,7 @@ class MainWindow:
 
         entryDeltas = []  # TODO: Refactoring: Should it use a new class, despite having the same data types as fields?
 
-        for entryInfo in self.currentDirInfo.entryInfos:
+        for entryInfo in self.currentScanResult.dirInfo.entryInfos:
 
             entryMatches = False
 
@@ -256,7 +271,7 @@ class MainWindow:
 
             entryDeleted = True
 
-            for entryInfo in self.currentDirInfo.entryInfos:
+            for entryInfo in self.currentScanResult.dirInfo.entryInfos:
 
                 if loadedEntryInfo[ "name" ] == entryInfo.name:
 
@@ -305,11 +320,11 @@ class MainWindow:
 
     def getEntryInfosSortedLexically( self ):
 
-        return sorted( self.currentDirInfo.entryInfos, key = lambda item: item.name.casefold() )
+        return sorted( self.currentScanResult.dirInfo.entryInfos, key = lambda item: item.name.casefold() )
 
     def getEntryInfosSortedBySize( self ):
 
-        return sorted( self.currentDirInfo.entryInfos, key = lambda item: item.size )
+        return sorted( self.currentScanResult.dirInfo.entryInfos, key = lambda item: item.size )
 
     def getDirSize( self, dirPath ):
 
@@ -331,10 +346,16 @@ class MainWindow:
 
         return dirSize
 
-    def setCurrentDirInfo( self, path, entryInfos ):
+    def setCurrentScanResult( self, path, entryInfos, depth ):
 
-        self.currentDirInfo.path = path
-        self.currentDirInfo.entryInfos = entryInfos
+        self.currentScanResult.dirInfo.path = path
+        self.currentScanResult.dirInfo.entryInfos = entryInfos
+        self.currentScanResult.depth = depth
+
+    def reportUnknownJson( self ):
+
+        tkmessagebox.showerror( "Error", "Although the file you opened is of JSON format, it's not saved from this "
+                                         "program." )
 
 mainWindowWidget = tk.Tk()
 mainWindowWidget.title( "Folder Size Monitor" )
