@@ -56,7 +56,7 @@ class MainWindow:
         self.loadButton = tk.Button( inputFrame, text = "Load and Compare", command = self.loadAndCompare )
         self.loadButton.grid( row = 0, column = 4 )
 
-        # Unit options
+        ## Unit options
         self.unitOptionsLabel = tk.Label( inputFrame, text = "Unit" )
         self.unitOptionsLabel.grid( row = 1, column = 0 )
         self.unitDivisor = 1
@@ -66,6 +66,14 @@ class MainWindow:
         self.unitOptionsMenu = tk.OptionMenu( inputFrame, self.unitOption, *self.unitOptions, command = lambda selected:
                                               self.onUnitSelected( selected ) )
         self.unitOptionsMenu.grid( row = 1, column = 1 )
+
+        ## Depth input
+        self.depthLabel = tk.Label( inputFrame, text = "Depth" )
+        self.depthLabel.grid( row = 1, column = 2 )
+        self.depthEntryBox = tk.Entry( inputFrame )
+        self.depthEntryBox.grid( row = 1, column = 3 )
+        self.depth = 1
+        self.depthEntryBox.insert( 0, self.depth )
 
         # Display
 
@@ -83,20 +91,37 @@ class MainWindow:
 
         self.currentDirInfo = DirInfo( "", [] )
 
+        self.MAXDEPTH = 5
+
     def onScanButtonClicked( self ):
+
+        """This function should be the only place that carries out scanning."""
 
         targetDirPath = tkfiledialog.askdirectory()
 
-        # If the dialog is closed with "Cancel"
+        # If the dialog is closed with "Cancel", return.
         if targetDirPath == "":
             return
 
-        self.clearDisplays()
+        # Get depth.
+        inputDepthString = self.depthEntryBox.get()
+        if not inputDepthString:  # Empty input
+            self.setDepth( 1 )
+        else:  # Non-empty input
+            try:  # Integer input
+                self.depth = int( inputDepthString )
+                if self.depth < 1 or self.depth > self.MAXDEPTH:
+                    tkmessagebox.showerror( "Error", "Depth can only be between 1 to 5. Resetting to 1." )
+                    self.setDepth( 1 )
+            except ValueError:  # Bad input
+                tkmessagebox.showerror( "Error", "Scan depth isn't an integer. Depth is set to 1." )
+                self.setDepth( 1 )
 
-        targetEntryInfos = self.getDirInfo( targetDirPath )
+        targetEntryInfos = self.getDirInfo( targetDirPath, 1 )
 
         self.setCurrentDirInfo( targetDirPath, targetEntryInfos )
 
+        self.clearDisplays()
         self.display( targetEntryInfos )
 
     def onSortButtonClicked( self, sortingFunction ):
@@ -121,9 +146,7 @@ class MainWindow:
     def display( self, entryInfos ):
 
         """ Fill the text boxes with specified contents.
-
         An "entry" is either a file or a dir.
-
         :param entryInfos: A list of EntryInfo
         """
 
@@ -139,6 +162,11 @@ class MainWindow:
     def clearDisplays( self ):
 
         self.dirInfoTreeview.delete( *self.dirInfoTreeview.get_children() )
+
+    def setDepth( self, targetDepth ):
+        self.depth = targetDepth
+        self.depthEntryBox.delete( 0, tk.END )
+        self.depthEntryBox.insert( 0, targetDepth )
 
     def saveResult( self ):
 
@@ -245,12 +273,11 @@ class MainWindow:
 
         reportWindowWidget.mainloop()
 
-    def getDirInfo( self, targetDirPath ):
+    def getDirInfo( self, targetDirPath, operatingDepth ):
 
         """ Get a directory's info from scratch.
-
         This is expensive because it calls getDirSize.
-
+        :param targetDirPath: A full path name of current directory.
         :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
         """
 
@@ -258,15 +285,18 @@ class MainWindow:
 
         for entry in os.scandir( targetDirPath ):
 
+            # Get entry size with different methods.
             if entry.is_file():
-
                 entrySize = os.path.getsize( entry )
-
             elif entry.is_dir():
-
                 entrySize = self.getDirSize( entry )
 
-            entryInfos.append( EntryInfo( entry.name, entrySize  ) )
+            entryInfos.append( EntryInfo( targetDirPath + "/" + entry.name, entrySize  ) )
+
+            # Recursively get and append sub-directory's entry infos.
+            if entry.is_dir() and operatingDepth < self.depth:
+                for entryInfo in self.getDirInfo( targetDirPath + "/" + entry.name, operatingDepth + 1 ):
+                    entryInfos.append( entryInfo )
 
         return entryInfos
 
