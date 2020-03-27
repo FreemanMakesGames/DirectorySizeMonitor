@@ -14,17 +14,13 @@ class EntryInfo:
     """
 
     def __init__( self, name, size ):
-
         self.name = name
-
         self.size = size
 
 class DirInfo:
 
     def __init__( self, path, entryInfos ):
-
         self.path = path
-
         self.entryInfos = entryInfos
 
 class MainWindow:
@@ -119,7 +115,8 @@ class MainWindow:
 
         self.unitDivisor = 1024 ** self.unitOptions.index( selected )
 
-        print( self.unitDivisor )
+        self.clearDisplays()
+        self.display( self.currentDirInfo.entryInfos )
 
     def display( self, entryInfos ):
 
@@ -137,7 +134,7 @@ class MainWindow:
 
             self.dirInfoTreeview.insert( "", tk.END, entryName )
             self.dirInfoTreeview.set( entryName, "content", entryName )
-            self.dirInfoTreeview.set( entryName, "size", str( entrySize ) )
+            self.dirInfoTreeview.set( entryName, "size", str( entrySize / self.unitDivisor ) )
 
     def clearDisplays( self ):
 
