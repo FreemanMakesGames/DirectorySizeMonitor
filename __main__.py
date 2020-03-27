@@ -83,6 +83,9 @@ class MainWindow:
         self.dirInfoTreeview = ttk.Treeview( displayFrame )
         self.dirInfoTreeview.config( show = ["headings"] )  # Hide the tree.
         self.dirInfoTreeview.config( columns = ( "content", "size" ) )
+        # Set column width
+        self.dirInfoTreeview.column( "content", width = 600 )
+        self.dirInfoTreeview.column( "size", width = 200 )
         self.dirInfoTreeview.heading( "content", text = "Content" )
         self.dirInfoTreeview.heading( "size", text = "Size" )
         self.dirInfoTreeview.grid( row = 0, column = 0 )
