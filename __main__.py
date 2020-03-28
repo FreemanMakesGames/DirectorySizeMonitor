@@ -7,27 +7,42 @@ import tkinter.filedialog as tkfiledialog
 import tkinter.messagebox as tkmessagebox
 import json
 
+
+class EntryType:
+    Unset = 0
+    File = 1
+    Dir = 2
+
+
 class EntryInfo:
 
+    """ An "entry" is either a file or a directory.
+
+    :var path: Full path name
+    :var entry_type: An EntryType enum which can be either File or Dir.
+    :var sub_entry_infos: If the entry is a dir, this will be an array of its sub-elements. Otherwise, it's empty.
     """
-    An "entry" is either a file or a directory.
-    """
 
-    def __init__( self, name, size ):
-        self.name = name
-        self.size = size
-
-class DirInfo:
-
-    def __init__( self, path, entryInfos ):
+    def __init__( self, path, entry_type, size, sub_entry_infos ):
         self.path = path
-        self.entryInfos = entryInfos
+        self.entry_type = entry_type
+        self.size = size
+        self.sub_entry_infos = sub_entry_infos
+
 
 class ScanResult:
 
-    def __init__( self, dirInfo, depth ):
-        self.dirInfo = dirInfo
+    """ Scan result
+
+    :var entry_infos: An array of every entry scanned. This isn't necessarily just the root's sub-entries.
+                      If the depth is more than 1, this excludes root's sub-entries, and includes
+                      the sub-entries below that.
+    """
+
+    def __init__( self, root_path, depth, entry_infos ):
+        self.root_path = root_path
         self.depth = depth
+        self.entry_infos = entry_infos
 
 class MainWindow:
 
@@ -35,149 +50,147 @@ class MainWindow:
 
         """ UI """
 
-        masterFrame = tk.Frame( master )
-        masterFrame.grid( row = 0, column = 0 )
+        master_frame = tk.Frame( master )
+        master_frame.grid( row = 0, column = 0 )
 
         # Input
 
-        inputFrame = tk.Frame( masterFrame )
-        inputFrame.grid( row = 0, column = 0, sticky = tk.W )
+        input_frame = tk.Frame( master_frame )
+        input_frame.grid( row = 0, column = 0, sticky = tk.W )
 
-        self.scanButton = tk.Button( inputFrame, text = "Scan", command = self.onScanButtonClicked )
-        self.scanButton.grid( row = 0, column = 0 )
+        self.scan_button = tk.Button( input_frame, text = "Scan", command = self.on_scan_button_clicked )
+        self.scan_button.grid( row = 0, column = 0 )
 
-        self.sortLexicallyButton = tk.Button( inputFrame, text = "Sort Lexically",
+        self.sort_lexically_button = tk.Button( input_frame, text = "Sort Lexically",
+                                                command = lambda:
+                                              self.on_sort_button_clicked( self.get_entry_infos_sorted_lexically ) )
+        self.sort_lexically_button.grid( row = 0, column = 1 )
+
+        self.sort_by_size_button = tk.Button( input_frame, text = "Sort By Size",
                                               command = lambda:
-                                              self.onSortButtonClicked( self.getEntryInfosSortedLexically ) )
-        self.sortLexicallyButton.grid( row = 0, column = 1 )
+                                           self.on_sort_button_clicked( self.get_entry_infos_sorted_by_size ) )
+        self.sort_by_size_button.grid( row = 0, column = 2 )
 
-        self.sortBySizeButton = tk.Button( inputFrame, text = "Sort By Size",
-                                           command = lambda:
-                                           self.onSortButtonClicked( self.getEntryInfosSortedBySize ) )
-        self.sortBySizeButton.grid( row = 0, column = 2 )
+        self.save_button = tk.Button( input_frame, text = "Save Result", command = self.save_result )
+        self.save_button.grid( row = 0, column = 3 )
 
-        self.saveButton = tk.Button( inputFrame, text = "Save Result", command = self.saveResult )
-        self.saveButton.grid( row = 0, column = 3 )
-
-        self.loadButton = tk.Button( inputFrame, text = "Load and Compare", command = self.loadAndCompare )
-        self.loadButton.grid( row = 0, column = 4 )
+        self.load_button = tk.Button( input_frame, text = "Load and Compare", command = self.load_and_compare )
+        self.load_button.grid( row = 0, column = 4 )
 
         ## Unit options
-        self.unitOptionsLabel = tk.Label( inputFrame, text = "Unit" )
-        self.unitOptionsLabel.grid( row = 1, column = 0 )
-        self.unitDivisor = 1
-        self.unitOptions = [ "B", "KB", "MB", "GB" ]
-        self.unitOption = tk.StringVar()
-        self.unitOption.set( self.unitOptions[ 0 ] )
-        self.unitOptionsMenu = tk.OptionMenu( inputFrame, self.unitOption, *self.unitOptions, command = lambda selected:
-                                              self.onUnitSelected( selected ) )
-        self.unitOptionsMenu.grid( row = 1, column = 1 )
+        self.unit_options_label = tk.Label( input_frame, text = "Unit" )
+        self.unit_options_label.grid( row = 1, column = 0 )
+        self.unit_divisor = 1
+        self.unit_options = ["B", "KB", "MB", "GB"]
+        self.unit_option = tk.StringVar()
+        self.unit_option.set( self.unit_options[ 0] )
+        self.unit_options_menu = tk.OptionMenu( input_frame, self.unit_option, *self.unit_options, command = lambda selected:
+                                              self.on_unit_selected( selected ) )
+        self.unit_options_menu.grid( row = 1, column = 1 )
 
         ## Depth input
-        self.depthLabel = tk.Label( inputFrame, text = "Depth" )
-        self.depthLabel.grid( row = 1, column = 2 )
-        self.depthEntryBox = tk.Entry( inputFrame )
-        self.depthEntryBox.grid( row = 1, column = 3 )
+        self.depth_label = tk.Label( input_frame, text = "Depth" )
+        self.depth_label.grid( row = 1, column = 2 )
+        self.depth_entry_box = tk.Entry( input_frame )
+        self.depth_entry_box.grid( row = 1, column = 3 )
         self.depth = 1
-        self.depthEntryBox.insert( 0, self.depth )
+        self.depth_entry_box.insert( 0, self.depth )
 
         # Display
 
-        displayFrame = tk.Frame( masterFrame )
-        displayFrame.grid( row = 1, column = 0 )
+        display_frame = tk.Frame( master_frame )
+        display_frame.grid( row = 1, column = 0 )
 
-        self.dirInfoTreeview = ttk.Treeview( displayFrame )
-        self.dirInfoTreeview.config( show = ["headings"] )  # Hide the tree.
-        self.dirInfoTreeview.config( columns = ( "content", "size" ) )
+        self.dir_info_tree_view = ttk.Treeview( display_frame )
+        self.dir_info_tree_view.config( show = ["headings"] )  # Hide the tree.
+        self.dir_info_tree_view.config( columns = ("content", "size") )
         # Set column width
-        self.dirInfoTreeview.column( "content", width = 600 )
-        self.dirInfoTreeview.column( "size", width = 200 )
-        self.dirInfoTreeview.heading( "content", text = "Content" )
-        self.dirInfoTreeview.heading( "size", text = "Size" )
-        self.dirInfoTreeview.grid( row = 0, column = 0 )
+        self.dir_info_tree_view.column( "content", width = 600 )
+        self.dir_info_tree_view.column( "size", width = 200 )
+        self.dir_info_tree_view.heading( "content", text = "Content" )
+        self.dir_info_tree_view.heading( "size", text = "Size" )
+        self.dir_info_tree_view.grid( row = 0, column = 0 )
 
         """ Backend """
 
-        self.currentScanResult = ScanResult( DirInfo( "", [] ), self.depth )
+        self.current_scan_result = ScanResult( "", self.depth, [] )
 
         self.MAXDEPTH = 5
 
-    def onScanButtonClicked( self ):
+    def on_scan_button_clicked( self ):
 
         """This function should be the only place that carries out scanning."""
 
-        targetDirPath = tkfiledialog.askdirectory()
+        target_dir_path = tkfiledialog.askdirectory()
 
         # If the dialog is closed with "Cancel", return.
-        if targetDirPath == "":
+        if target_dir_path == "":
             return
 
         # Get depth.
-        inputDepthString = self.depthEntryBox.get()
-        if not inputDepthString:  # Empty input
-            self.setDepth( 1 )
+        input_depth_string = self.depth_entry_box.get()
+        if not input_depth_string:  # Empty input
+            self.set_depth( 1 )
         else:  # Non-empty input
             try:  # Integer input
-                self.depth = int( inputDepthString )
+                self.depth = int( input_depth_string )
                 if self.depth < 1 or self.depth > self.MAXDEPTH:
                     tkmessagebox.showerror( "Error", "Depth can only be between 1 to 5. Resetting to 1." )
-                    self.setDepth( 1 )
+                    self.set_depth( 1 )
             except ValueError:  # Bad input
                 tkmessagebox.showerror( "Error", "Scan depth isn't an integer. Depth is set to 1." )
-                self.setDepth( 1 )
+                self.set_depth( 1 )
 
-        targetEntryInfos = self.getDirInfo( targetDirPath, 1 )
+        target_entry_infos = self.get_dir_info( target_dir_path, 1 )
 
-        self.setCurrentScanResult( targetDirPath, targetEntryInfos, self.depth )
+        self.set_current_scan_result( target_dir_path, self.depth, target_entry_infos )
 
-        self.clearDisplays()
-        self.display( targetEntryInfos )
+        self.clear_displays()
+        self.display( target_entry_infos )
 
-    def onSortButtonClicked( self, sortingFunction ):
+    def on_sort_button_clicked( self, sorting_function ):
 
-        if self.currentScanResult.dirInfo.path == "":
+        if self.current_scan_result.root_path == "":
             tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
             return
 
-        self.clearDisplays()
+        self.clear_displays()
 
-        targetEntryInfos = sortingFunction()
+        target_entry_infos = sorting_function()
 
-        self.display( targetEntryInfos )
+        self.display( target_entry_infos )
 
-    def onUnitSelected( self, selected ):
+    def on_unit_selected( self, selected ):
 
-        self.unitDivisor = 1024 ** self.unitOptions.index( selected )
+        self.unit_divisor = 1024 ** self.unit_options.index( selected )
 
-        self.clearDisplays()
-        self.display( self.currentScanResult.dirInfo.entryInfos )
+        self.clear_displays()
+        self.display( self.current_scan_result.entry_infos )
 
-    def display( self, entryInfos ):
+    def display( self, entry_infos ):
 
         """ Fill the text boxes with specified contents.
-        An "entry" is either a file or a dir.
-        :param entryInfos: A list of EntryInfo
+
+        :param entry_infos: A list of EntryInfo
         """
 
-        for entryInfo in entryInfos:
+        for entry_info in entry_infos:
 
-            entryName = entryInfo.name
-            entrySize = entryInfo.size
+            self.dir_info_tree_view.insert( "", tk.END, entry_info.path )
+            self.dir_info_tree_view.set( entry_info.path, "content", entry_info.path )
+            self.dir_info_tree_view.set( entry_info.path, "size", str( entry_info.size / self.unit_divisor ) +
+                                         self.unit_option.get() )
 
-            self.dirInfoTreeview.insert( "", tk.END, entryName )
-            self.dirInfoTreeview.set( entryName, "content", entryName )
-            self.dirInfoTreeview.set( entryName, "size", str( entrySize / self.unitDivisor ) + self.unitOption.get() )
+    def clear_displays( self ):
 
-    def clearDisplays( self ):
+        self.dir_info_tree_view.delete( *self.dir_info_tree_view.get_children() )
 
-        self.dirInfoTreeview.delete( *self.dirInfoTreeview.get_children() )
+    def set_depth( self, target_depth ):
+        self.depth = target_depth
+        self.depth_entry_box.delete( 0, tk.END )
+        self.depth_entry_box.insert( 0, target_depth )
 
-    def setDepth( self, targetDepth ):
-        self.depth = targetDepth
-        self.depthEntryBox.delete( 0, tk.END )
-        self.depthEntryBox.insert( 0, targetDepth )
-
-    def saveResult( self ):
+    def save_result( self ):
 
         file = tkfiledialog.asksaveasfile( mode = 'w' )
 
@@ -185,11 +198,11 @@ class MainWindow:
         if file is None:
             return
 
-        json.dump( self.currentScanResult.__dict__, file, default = lambda o: o.__dict__, indent = 4 )
+        json.dump( self.current_scan_result.__dict__, file, default = lambda o: o.__dict__, indent = 4 )
 
         file.close()
 
-    def loadAndCompare( self ):
+    def load_and_compare( self ):
 
         file = tkfiledialog.askopenfile()
 
@@ -200,7 +213,7 @@ class MainWindow:
         # Load and validate.
 
         try:
-            loadedScanResult = json.load( file )
+            loaded_scan_result = json.load( file )
         except ValueError:
             tkmessagebox.showerror( "Error", "The file you opened is not of JSON format, thus it's not saved from this "
                                              "program." )
@@ -209,156 +222,174 @@ class MainWindow:
         file.close()
 
         try:
-            loadedDirInfo = loadedScanResult[ "dirInfo" ]
+            loaded_dir_info = loaded_scan_result[ "dirInfo" ]
         except KeyError:
-            self.reportUnknownJson()
+            self.report_unknown_json()
             return
 
         try:
-            loadedDirPath = loadedDirInfo[ "path" ]
+            loaded_dir_path = loaded_dir_info[ "path" ]
         except KeyError:
-            self.reportUnknownJson()
+            self.report_unknown_json()
             return
         else:
-            if ( loadedDirPath != self.currentScanResult.dirInfo.path):
+            if loaded_dir_path != self.current_scan_result.root_path:
                 tkmessagebox.showerror( "Error", "The result you loaded isn't describing the same directory of what's"
                                                  "currently displayed." )
                 return
 
         try:
-            loadedDepth = loadedScanResult[ "depth" ]
+            loaded_depth = loaded_scan_result[ "depth" ]
         except KeyError:
-            self.reportUnknownJson()
+            self.report_unknown_json()
             return
         else:
-            if ( loadedDepth != self.currentScanResult.depth ):
+            if loaded_depth != self.current_scan_result.depth:
                 tkmessagebox.showerror( "Error", "The result you loaded is describing the same directory of"
                                                  "what's currently displayed, but the depth isn't the same."
                                                  "So it can't be compared." )
                 return
 
         try:
-            loadedEntryInfos = loadedDirInfo[ "entryInfos" ]
+            loaded_entry_infos = loaded_dir_info[ "entryInfos" ]
         except KeyError:
             tkmessagebox.showerror( "Error", "The file is corrupted." )
             return
 
         # Compare.
 
-        entryDeltas = []  # TODO: Refactoring: Should it use a new class, despite having the same data types as fields?
+        entry_deltas = []  # TODO: Refactoring: Should it use a new class, despite having the same data types as fields?
 
-        for entryInfo in self.currentScanResult.dirInfo.entryInfos:
+        for entry_info in self.current_scan_result.entry_infos:
 
-            entryMatches = False
+            entry_matches = False
 
-            for loadedEntryInfo in loadedEntryInfos:  # loadedEntryInfo is a dict.
+            for loadedEntryInfo in loaded_entry_infos:  # loadedEntryInfo is a dict.
 
-                if entryInfo.name == loadedEntryInfo[ "name" ]:
+                if entry_info.name == loadedEntryInfo[ "name" ]:
 
-                    entryMatches = True
+                    entry_matches = True
 
-                    if entryInfo.size != loadedEntryInfo[ "size" ]:
+                    if entry_info.size != loadedEntryInfo[ "size" ]:
 
-                        entryDeltas.append( EntryInfo( entryInfo.name, entryInfo.size - loadedEntryInfo[ "size" ] ) )
-
-                    break
-
-            if not entryMatches:
-
-                entryDeltas.append( EntryInfo( entryInfo.name, entryInfo.size ) )
-
-        for loadedEntryInfo in loadedEntryInfos:
-
-            entryDeleted = True
-
-            for entryInfo in self.currentScanResult.dirInfo.entryInfos:
-
-                if loadedEntryInfo[ "name" ] == entryInfo.name:
-
-                    entryDeleted = False
+                        entry_deltas.append( EntryInfo( entry_info.name, entry_info.size - loadedEntryInfo[ "size" ] ) )
 
                     break
 
-            if entryDeleted:
+            if not entry_matches:
 
-                entryDeltas.append( EntryInfo( loadedEntryInfo[ "name" ], -loadedEntryInfo[ "size" ] ) )
+                entry_deltas.append( EntryInfo( entry_info.name, entry_info.size ) )
 
-        print( entryDeltas )
+        for loadedEntryInfo in loaded_entry_infos:
 
-        reportWindowWidget = tk.Tk()
-        reportWindowWidget.title( "Report" )
-        reportWindow = ReportWindow( reportWindowWidget, entryDeltas )
+            entry_deleted = True
 
-        reportWindowWidget.mainloop()
+            for entry_info in self.current_scan_result.entry_infos:
 
-    def getDirInfo( self, targetDirPath, operatingDepth ):
+                if loadedEntryInfo[ "name" ] == entry_info.name:
+
+                    entry_deleted = False
+
+                    break
+
+            if entry_deleted:
+
+                entry_deltas.append( EntryInfo( loadedEntryInfo[ "name" ], -loadedEntryInfo[ "size" ] ) )
+
+        print( entry_deltas )
+
+        report_window_widget = tk.Tk()
+        report_window_widget.title( "Report" )
+        report_window = ReportWindow( report_window_widget, entry_deltas )
+
+        report_window_widget.mainloop()
+
+    def get_dir_info( self, target_dir_path, operating_depth ):
 
         """ Get a directory's info from scratch.
+
         This is expensive because it calls getDirSize.
-        :param targetDirPath: A full path name of current directory.
+
+        :param target_dir_path: A full path name of current directory.
         :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
         """
 
-        entryInfos = []
+        entry_infos = []
 
-        for entry in os.scandir( targetDirPath ):
+        for entry in os.scandir( target_dir_path ):
 
-            # Get entry size with different methods.
+            # Init entry info.
+            entry_info = EntryInfo( target_dir_path + "/" + entry.name, EntryType.Unset, 0, [] )
+
             if entry.is_file():
-                entrySize = os.path.getsize( entry )
+
+                entry_info.entry_type = EntryType.File
+                entry_info.size = os.path.getsize( entry )
+
+                entry_infos.append( entry_info )
+
+                continue
+
             elif entry.is_dir():
-                entrySize = self.getDirSize( entry )
 
-            entryInfos.append( EntryInfo( targetDirPath + "/" + entry.name, entrySize  ) )
+                # If depth isn't exhausted, recursively get and append all sub-entries, but exclude itself.
+                if operating_depth < self.depth:
+                    for entry_info in self.get_dir_info( entry_info.path, operating_depth + 1 ):
+                        entry_infos.append( entry_info )
+                # If depth is exhausted, simply append itself.
+                else:
+                    entry_info.entry_type = EntryType.Dir
+                    entry_info.size = self.get_dir_size( entry )
+                    entry_infos.append( entry_info )
 
-            # Recursively get and append sub-directory's entry infos.
-            if entry.is_dir() and operatingDepth < self.depth:
-                for entryInfo in self.getDirInfo( targetDirPath + "/" + entry.name, operatingDepth + 1 ):
-                    entryInfos.append( entryInfo )
+            else:
+                tkmessagebox.showerror( "Error", entry_info.path + " is neither file nor directory? Aborted." )
+                return
 
-        return entryInfos
+        return entry_infos
 
-    def getEntryInfosSortedLexically( self ):
+    def get_entry_infos_sorted_lexically( self ):
 
-        return sorted( self.currentScanResult.dirInfo.entryInfos, key = lambda item: item.name.casefold() )
+        return sorted( self.current_scan_result.entry_infos, key = lambda item: item.path.casefold() )
 
-    def getEntryInfosSortedBySize( self ):
+    def get_entry_infos_sorted_by_size( self ):
 
-        return sorted( self.currentScanResult.dirInfo.entryInfos, key = lambda item: item.size )
+        return sorted( self.current_scan_result.entry_infos, key = lambda item: item.size )
 
-    def getDirSize( self, dirPath ):
+    def get_dir_size( self, dir_path ):
 
         """ Calculate a directory's size.
 
         This is expensive.
         """
 
-        dirSize = 0
+        dir_size = 0
 
-        for subDirPath, subDirNames, fileNames in os.walk( dirPath ):
+        for sub_dir_path, sub_dir_names, file_names in os.walk( dir_path ):
 
-            for fileName in fileNames:
+            for fileName in file_names:
 
-                filePath = os.path.join( subDirPath, fileName )
+                file_path = os.path.join( sub_dir_path, fileName )
 
-                if not os.path.islink( filePath ):
-                    dirSize += os.path.getsize( filePath )
+                if not os.path.islink( file_path ):
+                    dir_size += os.path.getsize( file_path )
 
-        return dirSize
+        return dir_size
 
-    def setCurrentScanResult( self, path, entryInfos, depth ):
+    def set_current_scan_result( self, root_path, depth, entry_infos ):
 
-        self.currentScanResult.dirInfo.path = path
-        self.currentScanResult.dirInfo.entryInfos = entryInfos
-        self.currentScanResult.depth = depth
+        self.current_scan_result.root_path = root_path
+        self.current_scan_result.depth = depth
+        self.current_scan_result.entry_infos = entry_infos
 
-    def reportUnknownJson( self ):
+    def report_unknown_json( self ):
 
         tkmessagebox.showerror( "Error", "Although the file you opened is of JSON format, it's not saved from this "
                                          "program." )
 
-mainWindowWidget = tk.Tk()
-mainWindowWidget.title( "Folder Size Monitor" )
-mainWindow = MainWindow( mainWindowWidget )
 
-mainWindowWidget.mainloop()
+main_window_widget = tk.Tk()
+main_window_widget.title( "Folder Size Monitor" )
+main_window = MainWindow( main_window_widget )
+
+main_window_widget.mainloop()
