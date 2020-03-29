@@ -150,6 +150,7 @@ class MainWindow:
 
         self.clear_all_displays()
         self.display_root_tree_view( self.current_scan_result.entry_infos )
+        self.display_delta_tree_view( self.current_entry_deltas )
 
     def display_root_tree_view( self, entry_infos ):
 
@@ -165,7 +166,8 @@ class MainWindow:
         for entry_delta in entry_deltas:
             self.delta_tree_view.insert( "", tk.END, entry_delta.path )
             self.delta_tree_view.set( entry_delta.path, "entry", entry_delta.path )
-            self.delta_tree_view.set( entry_delta.path, "delta", entry_delta.delta )
+            self.delta_tree_view.set( entry_delta.path, "delta", str( entry_delta.delta / self.unit_divisor ) +
+                                      self.unit_option.get() )
 
     def clear_all_displays( self ):
 
