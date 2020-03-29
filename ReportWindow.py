@@ -19,8 +19,8 @@ class ReportWindow:
 		#		Solution: Make a subclass of Treeview, which adds this display function.
         for entryDelta in entryDeltas:
 
-            entryName = entryDelta.name
-            entrySizeDelta = entryDelta.size
+            entryName = entryDelta.path
+            entrySizeDelta = entryDelta.delta
 
             self.reportTreeview.insert( "", tk.END, entryName )
             self.reportTreeview.set( entryName, "content", entryName )

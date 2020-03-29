@@ -30,6 +30,15 @@ class EntryInfo:
         self.sub_entry_infos = sub_entry_infos
 
 
+class EntryDelta:
+
+    """ How much has the size of an entry at a certain path changed"""
+
+    def __init__( self, path, delta ):
+        self.path = path
+        self.delta = delta
+
+
 class ScanResult:
 
     """ Scan result
@@ -222,18 +231,12 @@ class MainWindow:
         file.close()
 
         try:
-            loaded_dir_info = loaded_scan_result[ "dirInfo" ]
-        except KeyError:
-            self.report_unknown_json()
-            return
-
-        try:
-            loaded_dir_path = loaded_dir_info[ "path" ]
+            loaded_root_path = loaded_scan_result[ "root_path" ]
         except KeyError:
             self.report_unknown_json()
             return
         else:
-            if loaded_dir_path != self.current_scan_result.root_path:
+            if loaded_root_path != self.current_scan_result.root_path:
                 tkmessagebox.showerror( "Error", "The result you loaded isn't describing the same directory of what's"
                                                  "currently displayed." )
                 return
@@ -251,7 +254,7 @@ class MainWindow:
                 return
 
         try:
-            loaded_entry_infos = loaded_dir_info[ "entryInfos" ]
+            loaded_entry_infos = loaded_scan_result[ "entry_infos" ]
         except KeyError:
             tkmessagebox.showerror( "Error", "The file is corrupted." )
             return
@@ -264,29 +267,31 @@ class MainWindow:
 
             entry_matches = False
 
-            for loadedEntryInfo in loaded_entry_infos:  # loadedEntryInfo is a dict.
+            for loaded_entry_info in loaded_entry_infos:  # loadedEntryInfo is a dict.
 
-                if entry_info.name == loadedEntryInfo[ "name" ]:
+                if entry_info.path == loaded_entry_info[ "path" ]:
 
                     entry_matches = True
 
-                    if entry_info.size != loadedEntryInfo[ "size" ]:
+                    if entry_info.size != loaded_entry_info[ "size" ]:
 
-                        entry_deltas.append( EntryInfo( entry_info.name, entry_info.size - loadedEntryInfo[ "size" ] ) )
+                        entry_deltas.append( EntryDelta( entry_info.path, entry_info.size -
+                                                         loaded_entry_info[ "size" ] ) )
 
                     break
 
+            # The entry is newly created.
             if not entry_matches:
 
-                entry_deltas.append( EntryInfo( entry_info.name, entry_info.size ) )
+                entry_deltas.append( EntryDelta( entry_info.path, entry_info.size ) )
 
-        for loadedEntryInfo in loaded_entry_infos:
+        for loaded_entry_info in loaded_entry_infos:
 
             entry_deleted = True
 
             for entry_info in self.current_scan_result.entry_infos:
 
-                if loadedEntryInfo[ "name" ] == entry_info.name:
+                if loaded_entry_info[ "path" ] == entry_info.path:
 
                     entry_deleted = False
 
@@ -294,7 +299,7 @@ class MainWindow:
 
             if entry_deleted:
 
-                entry_deltas.append( EntryInfo( loadedEntryInfo[ "name" ], -loadedEntryInfo[ "size" ] ) )
+                entry_deltas.append( EntryDelta( loaded_entry_info[ "path" ], -loaded_entry_info[ "size" ] ) )
 
         print( entry_deltas )
 
