@@ -67,17 +67,17 @@ class MainWindow:
         display_frame = tk.Frame( master_frame )
         display_frame.grid( row = 1, column = 0 )
 
-        ## Size stats
-        self.dir_info_tree_view = ttk.Treeview( display_frame )
-        self.dir_info_tree_view.config( show = [ "headings" ] )  # Hide the tree.
-        self.dir_info_tree_view.config( columns = ( "content", "size" ) )
-        self.dir_info_tree_view.column( "content", width = 600 )
-        self.dir_info_tree_view.column( "size", width = 200 )
-        self.dir_info_tree_view.heading( "content", text = "Content" )
-        self.dir_info_tree_view.heading( "size", text = "Size" )
-        self.dir_info_tree_view.grid( row = 0, column = 0 )
+        ## Root tree view
+        self.root_tree_view = ttk.Treeview( display_frame )
+        self.root_tree_view.config( show = ["headings"] )  # Hide the tree.
+        self.root_tree_view.config( columns = ("content", "size") )
+        self.root_tree_view.column( "content", width = 600 )
+        self.root_tree_view.column( "size", width = 200 )
+        self.root_tree_view.heading( "content", text = "Content" )
+        self.root_tree_view.heading( "size", text = "Size" )
+        self.root_tree_view.grid( row = 0, column = 0 )
 
-        ## Delta
+        ## Delta tree view
         self.delta_tree_view = ttk.Treeview( display_frame )
         self.delta_tree_view.config( show = [ "headings" ] )  # Hide the tree.
         self.delta_tree_view.config( columns = ( "entry", "delta" ) )
@@ -121,7 +121,7 @@ class MainWindow:
 
         self.set_current_scan_result( target_dir_path, self.depth, target_entry_infos )
 
-        self.clear_displays()
+        self.clear_display()
         self.display( target_entry_infos )
 
     def on_sort_button_clicked( self, sorting_function ):
@@ -130,7 +130,7 @@ class MainWindow:
             tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
             return
 
-        self.clear_displays()
+        self.clear_display()
 
         target_entry_infos = sorting_function()
 
@@ -140,7 +140,7 @@ class MainWindow:
 
         self.unit_divisor = 1024 ** self.unit_options.index( selected )
 
-        self.clear_displays()
+        self.clear_display()
         self.display( self.current_scan_result.entry_infos )
 
     def display( self, entry_infos ):
@@ -152,14 +152,19 @@ class MainWindow:
 
         for entry_info in entry_infos:
 
-            self.dir_info_tree_view.insert( "", tk.END, entry_info.path )
-            self.dir_info_tree_view.set( entry_info.path, "content", entry_info.path )
-            self.dir_info_tree_view.set( entry_info.path, "size", str( entry_info.size / self.unit_divisor ) +
-                                         self.unit_option.get() )
+            self.root_tree_view.insert( "", tk.END, entry_info.path )
+            self.root_tree_view.set( entry_info.path, "content", entry_info.path )
+            self.root_tree_view.set( entry_info.path, "size", str( entry_info.size / self.unit_divisor ) +
+                                     self.unit_option.get() )
 
-    def clear_displays( self ):
+    def clear_display( self ):
 
-        self.dir_info_tree_view.delete( *self.dir_info_tree_view.get_children() )
+        self.clear_tree_view( self.root_tree_view )
+        self.clear_tree_view( self.delta_tree_view )
+
+    def clear_tree_view( self, tree_view ):
+
+        tree_view.delete( *tree_view.get_children() )
 
     def set_depth( self, target_depth ):
         self.depth = target_depth
@@ -268,13 +273,12 @@ class MainWindow:
 
                 entry_deltas.append( EntryDelta( loaded_entry_info[ "path" ], -loaded_entry_info[ "size" ] ) )
 
-        print( entry_deltas )
-
-        report_window_widget = tk.Tk()
-        report_window_widget.title( "Report" )
-        report_window = ReportWindow( report_window_widget, entry_deltas )
-
-        report_window_widget.mainloop()
+        # Display.
+        self.clear_tree_view( self.delta_tree_view )
+        for entry_delta in entry_deltas:
+            self.delta_tree_view.insert( "", tk.END, entry_delta.path )
+            self.delta_tree_view.set( entry_delta.path, "entry", entry_delta.path )
+            self.delta_tree_view.set( entry_delta.path, "delta", entry_delta.delta )
 
     def get_dir_info( self, target_dir_path, operating_depth ):
 
