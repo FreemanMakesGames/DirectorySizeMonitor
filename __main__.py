@@ -67,15 +67,25 @@ class MainWindow:
         display_frame = tk.Frame( master_frame )
         display_frame.grid( row = 1, column = 0 )
 
+        ## Size stats
         self.dir_info_tree_view = ttk.Treeview( display_frame )
-        self.dir_info_tree_view.config( show = ["headings"] )  # Hide the tree.
-        self.dir_info_tree_view.config( columns = ("content", "size") )
-        # Set column width
+        self.dir_info_tree_view.config( show = [ "headings" ] )  # Hide the tree.
+        self.dir_info_tree_view.config( columns = ( "content", "size" ) )
         self.dir_info_tree_view.column( "content", width = 600 )
         self.dir_info_tree_view.column( "size", width = 200 )
         self.dir_info_tree_view.heading( "content", text = "Content" )
         self.dir_info_tree_view.heading( "size", text = "Size" )
         self.dir_info_tree_view.grid( row = 0, column = 0 )
+
+        ## Delta
+        self.delta_tree_view = ttk.Treeview( display_frame )
+        self.delta_tree_view.config( show = [ "headings" ] )  # Hide the tree.
+        self.delta_tree_view.config( columns = ( "entry", "delta" ) )
+        self.delta_tree_view.column( "entry", width = 600 )
+        self.delta_tree_view.column( "delta", width = 200 )
+        self.delta_tree_view.heading( "entry", text = "Entry" )
+        self.delta_tree_view.heading( "delta", text = "Delta" )
+        self.delta_tree_view.grid( row = 1, column = 0 )
 
         """ Backend """
 
