@@ -28,13 +28,13 @@ class MainWindow:
         self.scan_button.grid( row = 0, column = 0 )
 
         self.sort_lexically_button = tk.Button( input_frame, text = "Sort Lexically", command = lambda:
-                                                self.on_sort_button_clicked( self.get_entry_infos_sorted_lexically,
-                                                                             self.get_entry_deltas_sorted_lexically ) )
+                                                self.on_sort_button_clicked( self.sort_entry_infos_lexically,
+                                                                             self.sort_entry_deltas_lexically ) )
         self.sort_lexically_button.grid( row = 0, column = 1 )
 
         self.sort_by_size_button = tk.Button( input_frame, text = "Sort By Size", command = lambda:
-                                              self.on_sort_button_clicked( self.get_entry_infos_sorted_by_size,
-                                                                           self.get_entry_deltas_sorted_by_size ) )
+                                              self.on_sort_button_clicked( self.sort_entry_infos_by_size,
+                                                                           self.sort_entry_deltas_by_size ) )
         self.sort_by_size_button.grid( row = 0, column = 2 )
 
         self.save_button = tk.Button( input_frame, text = "Save Result", command = self.save_result )
@@ -68,6 +68,8 @@ class MainWindow:
         display_frame.grid( row = 1, column = 0 )
 
         ## Root tree view
+        self.root_tree_view_label = tk.Label( display_frame, text = "Scan Result" )
+        self.root_tree_view_label.grid( row = 0, column = 0, sticky = tk.W )
         self.root_tree_view = ttk.Treeview( display_frame )
         self.root_tree_view.config( show = ["headings"] )  # Hide the tree.
         self.root_tree_view.config( columns = ("content", "size") )
@@ -75,9 +77,11 @@ class MainWindow:
         self.root_tree_view.column( "size", width = 200 )
         self.root_tree_view.heading( "content", text = "Content" )
         self.root_tree_view.heading( "size", text = "Size" )
-        self.root_tree_view.grid( row = 0, column = 0 )
+        self.root_tree_view.grid( row = 1, column = 0 )
 
         ## Delta tree view
+        self.delta_tree_view_label = tk.Label( display_frame, text = "Comparison" )
+        self.delta_tree_view_label.grid( row = 2, column = 0, sticky = tk.W )
         self.delta_tree_view = ttk.Treeview( display_frame )
         self.delta_tree_view.config( show = [ "headings" ] )  # Hide the tree.
         self.delta_tree_view.config( columns = ( "entry", "delta" ) )
@@ -85,7 +89,7 @@ class MainWindow:
         self.delta_tree_view.column( "delta", width = 200 )
         self.delta_tree_view.heading( "entry", text = "Entry" )
         self.delta_tree_view.heading( "delta", text = "Delta" )
-        self.delta_tree_view.grid( row = 1, column = 0 )
+        self.delta_tree_view.grid( row = 3, column = 0 )
 
         """ Backend """
 
@@ -125,7 +129,7 @@ class MainWindow:
 
         # Display.
         self.clear_all_displays()
-        self.display_root_tree_view( target_entry_infos )
+        self.display_root_tree_view()
 
     def on_sort_button_clicked( self, entry_infos_sorting_function, entry_deltas_sorting_function ):
 
@@ -134,36 +138,36 @@ class MainWindow:
             return
 
         # Sort and display entry infos.
-        entry_infos_to_display = entry_infos_sorting_function()
+        self.current_scan_result.entry_infos = entry_infos_sorting_function( self.current_scan_result.entry_infos )
         self.clear_tree_view( self.root_tree_view )
-        self.display_root_tree_view( entry_infos_to_display )
+        self.display_root_tree_view()
 
         # Sort and display entry deltas, if any.
         if len( self.current_entry_deltas ) > 0:
-            entry_deltas_to_display = entry_deltas_sorting_function()
+            self.current_entry_deltas = entry_deltas_sorting_function( self.current_entry_deltas )
             self.clear_tree_view( self.delta_tree_view )
-            self.display_delta_tree_view( entry_deltas_to_display )
+            self.display_delta_tree_view()
 
     def on_unit_selected( self, selected ):
 
         self.unit_divisor = 1024 ** self.unit_options.index( selected )
 
         self.clear_all_displays()
-        self.display_root_tree_view( self.current_scan_result.entry_infos )
-        self.display_delta_tree_view( self.current_entry_deltas )
+        self.display_root_tree_view()
+        self.display_delta_tree_view()
 
-    def display_root_tree_view( self, entry_infos ):
+    def display_root_tree_view( self ):
 
-        for entry_info in entry_infos:
+        for entry_info in self.current_scan_result.entry_infos:
 
             self.root_tree_view.insert( "", tk.END, entry_info.path )
             self.root_tree_view.set( entry_info.path, "content", entry_info.path )
             self.root_tree_view.set( entry_info.path, "size", str( entry_info.size / self.unit_divisor ) +
                                      self.unit_option.get() )
 
-    def display_delta_tree_view( self, entry_deltas ):
+    def display_delta_tree_view( self ):
 
-        for entry_delta in entry_deltas:
+        for entry_delta in self.current_entry_deltas:
             self.delta_tree_view.insert( "", tk.END, entry_delta.path )
             self.delta_tree_view.set( entry_delta.path, "entry", entry_delta.path )
             self.delta_tree_view.set( entry_delta.path, "delta", str( entry_delta.delta / self.unit_divisor ) +
@@ -289,7 +293,7 @@ class MainWindow:
 
         # Display.
         self.clear_tree_view( self.delta_tree_view )
-        self.display_delta_tree_view( entry_deltas )
+        self.display_delta_tree_view()
 
     def get_dir_info( self, target_dir_path, operating_depth ):
 
@@ -335,21 +339,21 @@ class MainWindow:
 
         return entry_infos
 
-    def get_entry_infos_sorted_lexically( self ):
+    def sort_entry_infos_lexically( self, entry_infos ):
 
-        return sorted( self.current_scan_result.entry_infos, key = lambda item: item.path.casefold() )
+        return sorted( entry_infos, key = lambda item: item.path.casefold() )
 
-    def get_entry_infos_sorted_by_size( self ):
+    def sort_entry_infos_by_size( self, entry_infos ):
 
-        return sorted( self.current_scan_result.entry_infos, key = lambda item: item.size )
+        return sorted( entry_infos, key = lambda item: item.size )
 
-    def get_entry_deltas_sorted_lexically( self ):
+    def sort_entry_deltas_lexically( self, entry_deltas ):
 
-        return sorted( self.current_entry_deltas, key = lambda item: item.path.casefold() )
+        return sorted( entry_deltas, key = lambda item: item.path.casefold() )
 
-    def get_entry_deltas_sorted_by_size( self ):
+    def sort_entry_deltas_by_size( self, entry_deltas ):
 
-        return sorted( self.current_entry_deltas, key = lambda item: item.delta )
+        return sorted( entry_deltas, key = lambda item: item.delta )
 
     def get_dir_size( self, dir_path ):
 
