@@ -27,14 +27,14 @@ class MainWindow:
         self.scan_button = tk.Button( input_frame, text = "Scan", command = self.on_scan_button_clicked )
         self.scan_button.grid( row = 0, column = 0 )
 
-        self.sort_lexically_button = tk.Button( input_frame, text = "Sort Lexically",
-                                                command = lambda:
-                                              self.on_sort_button_clicked( self.get_entry_infos_sorted_lexically ) )
+        self.sort_lexically_button = tk.Button( input_frame, text = "Sort Lexically", command = lambda:
+                                                self.on_sort_button_clicked( self.get_entry_infos_sorted_lexically,
+                                                                             self.get_entry_deltas_sorted_lexically ) )
         self.sort_lexically_button.grid( row = 0, column = 1 )
 
-        self.sort_by_size_button = tk.Button( input_frame, text = "Sort By Size",
-                                              command = lambda:
-                                           self.on_sort_button_clicked( self.get_entry_infos_sorted_by_size ) )
+        self.sort_by_size_button = tk.Button( input_frame, text = "Sort By Size", command = lambda:
+                                              self.on_sort_button_clicked( self.get_entry_infos_sorted_by_size,
+                                                                           self.get_entry_deltas_sorted_by_size ) )
         self.sort_by_size_button.grid( row = 0, column = 2 )
 
         self.save_button = tk.Button( input_frame, text = "Save Result", command = self.save_result )
@@ -50,8 +50,8 @@ class MainWindow:
         self.unit_options = ["B", "KB", "MB", "GB"]
         self.unit_option = tk.StringVar()
         self.unit_option.set( self.unit_options[ 0] )
-        self.unit_options_menu = tk.OptionMenu( input_frame, self.unit_option, *self.unit_options, command = lambda selected:
-                                              self.on_unit_selected( selected ) )
+        self.unit_options_menu = tk.OptionMenu( input_frame, self.unit_option, *self.unit_options,
+                                                command = lambda selected: self.on_unit_selected( selected ) )
         self.unit_options_menu.grid( row = 1, column = 1 )
 
         ## Depth input
@@ -91,6 +91,8 @@ class MainWindow:
 
         self.current_scan_result = ScanResult( "", self.depth, [] )
 
+        self.current_entry_deltas = []
+
         self.MAXDEPTH = 5
 
     def on_scan_button_clicked( self ):
@@ -121,34 +123,35 @@ class MainWindow:
 
         self.set_current_scan_result( target_dir_path, self.depth, target_entry_infos )
 
-        self.clear_display()
-        self.display( target_entry_infos )
+        # Display.
+        self.clear_all_displays()
+        self.display_root_tree_view( target_entry_infos )
 
-    def on_sort_button_clicked( self, sorting_function ):
+    def on_sort_button_clicked( self, entry_infos_sorting_function, entry_deltas_sorting_function ):
 
         if self.current_scan_result.root_path == "":
             tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
             return
 
-        self.clear_display()
+        # Sort and display entry infos.
+        entry_infos_to_display = entry_infos_sorting_function()
+        self.clear_tree_view( self.root_tree_view )
+        self.display_root_tree_view( entry_infos_to_display )
 
-        target_entry_infos = sorting_function()
-
-        self.display( target_entry_infos )
+        # Sort and display entry deltas, if any.
+        if len( self.current_entry_deltas ) > 0:
+            entry_deltas_to_display = entry_deltas_sorting_function()
+            self.clear_tree_view( self.delta_tree_view )
+            self.display_delta_tree_view( entry_deltas_to_display )
 
     def on_unit_selected( self, selected ):
 
         self.unit_divisor = 1024 ** self.unit_options.index( selected )
 
-        self.clear_display()
-        self.display( self.current_scan_result.entry_infos )
+        self.clear_all_displays()
+        self.display_root_tree_view( self.current_scan_result.entry_infos )
 
-    def display( self, entry_infos ):
-
-        """ Fill the text boxes with specified contents.
-
-        :param entry_infos: A list of EntryInfo
-        """
+    def display_root_tree_view( self, entry_infos ):
 
         for entry_info in entry_infos:
 
@@ -157,7 +160,14 @@ class MainWindow:
             self.root_tree_view.set( entry_info.path, "size", str( entry_info.size / self.unit_divisor ) +
                                      self.unit_option.get() )
 
-    def clear_display( self ):
+    def display_delta_tree_view( self, entry_deltas ):
+
+        for entry_delta in entry_deltas:
+            self.delta_tree_view.insert( "", tk.END, entry_delta.path )
+            self.delta_tree_view.set( entry_delta.path, "entry", entry_delta.path )
+            self.delta_tree_view.set( entry_delta.path, "delta", entry_delta.delta )
+
+    def clear_all_displays( self ):
 
         self.clear_tree_view( self.root_tree_view )
         self.clear_tree_view( self.delta_tree_view )
@@ -273,12 +283,11 @@ class MainWindow:
 
                 entry_deltas.append( EntryDelta( loaded_entry_info[ "path" ], -loaded_entry_info[ "size" ] ) )
 
+        self.current_entry_deltas = entry_deltas
+
         # Display.
         self.clear_tree_view( self.delta_tree_view )
-        for entry_delta in entry_deltas:
-            self.delta_tree_view.insert( "", tk.END, entry_delta.path )
-            self.delta_tree_view.set( entry_delta.path, "entry", entry_delta.path )
-            self.delta_tree_view.set( entry_delta.path, "delta", entry_delta.delta )
+        self.display_delta_tree_view( entry_deltas )
 
     def get_dir_info( self, target_dir_path, operating_depth ):
 
@@ -331,6 +340,14 @@ class MainWindow:
     def get_entry_infos_sorted_by_size( self ):
 
         return sorted( self.current_scan_result.entry_infos, key = lambda item: item.size )
+
+    def get_entry_deltas_sorted_lexically( self ):
+
+        return sorted( self.current_entry_deltas, key = lambda item: item.path.casefold() )
+
+    def get_entry_deltas_sorted_by_size( self ):
+
+        return sorted( self.current_entry_deltas, key = lambda item: item.delta )
 
     def get_dir_size( self, dir_path ):
 
