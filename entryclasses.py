@@ -4,6 +4,13 @@ class EntryType:
     Dir = 2
 
 
+class DeltaType:
+    Unset = 0
+    NoDiff = 1
+    SizeDiff = 2
+    NewEntry = 3
+    Deleted = 4
+
 class EntryInfo:
 
     """ An "entry" is either a file or a directory.
@@ -24,6 +31,7 @@ class EntryDelta:
 
     """ How much has the size of an entry at a certain path changed"""
 
-    def __init__( self, path, delta ):
+    def __init__( self, path, delta, delta_type ):
         self.path = path
         self.delta = delta
+        self.delta_type = delta_type

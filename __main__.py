@@ -168,10 +168,15 @@ class MainWindow:
     def display_delta_tree_view( self ):
 
         for entry_delta in self.current_entry_deltas:
+
             self.delta_tree_view.insert( "", tk.END, entry_delta.path )
             self.delta_tree_view.set( entry_delta.path, "entry", entry_delta.path )
             self.delta_tree_view.set( entry_delta.path, "delta", str( entry_delta.delta / self.unit_divisor ) +
                                       self.unit_option.get() )
+
+            if entry_delta.delta_type == DeltaType.NewEntry:
+
+                self.delta_tree_view.rowconfigure( )
 
     def clear_all_displays( self ):
 
@@ -264,14 +269,14 @@ class MainWindow:
                     if entry_info.size != loaded_entry_info[ "size" ]:
 
                         entry_deltas.append( EntryDelta( entry_info.path, entry_info.size -
-                                                         loaded_entry_info[ "size" ] ) )
+                                                         loaded_entry_info[ "size" ], DeltaType.SizeDiff ) )
 
                     break
 
             # The entry is newly created.
             if not entry_matches:
 
-                entry_deltas.append( EntryDelta( entry_info.path, entry_info.size ) )
+                entry_deltas.append( EntryDelta( entry_info.path, entry_info.size, DeltaType.NewEntry ) )
 
         for loaded_entry_info in loaded_entry_infos:
 
@@ -287,7 +292,8 @@ class MainWindow:
 
             if entry_deleted:
 
-                entry_deltas.append( EntryDelta( loaded_entry_info[ "path" ], -loaded_entry_info[ "size" ] ) )
+                entry_deltas.append( EntryDelta( loaded_entry_info[ "path" ], -loaded_entry_info[ "size" ],
+                                                 DeltaType.Deleted ) )
 
         self.current_entry_deltas = entry_deltas
 
