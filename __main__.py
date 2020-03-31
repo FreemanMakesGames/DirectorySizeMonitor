@@ -174,9 +174,15 @@ class MainWindow:
             self.delta_tree_view.set( entry_delta.path, "delta", str( entry_delta.delta / self.unit_divisor ) +
                                       self.unit_option.get() )
 
+            # Assign tag based on delta type, for highlighting.
             if entry_delta.delta_type == DeltaType.NewEntry:
+                self.delta_tree_view.item( entry_delta.path, tags = "new_entry" )
+            elif entry_delta.delta_type == DeltaType.Deleted:
+                self.delta_tree_view.item( entry_delta.path, tags = "deleted" )
 
-                self.delta_tree_view.rowconfigure( )
+        # Highlight rows based on their tag.
+        self.delta_tree_view.tag_configure( "new_entry", background = "green" )
+        self.delta_tree_view.tag_configure( "deleted", background = "red" )
 
     def clear_all_displays( self ):
 
