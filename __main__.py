@@ -181,8 +181,8 @@ class MainWindow:
                 self.delta_tree_view.item( entry_delta.path, tags = "deleted" )
 
         # Highlight rows based on their tag.
-        self.delta_tree_view.tag_configure( "new_entry", background = "green" )
-        self.delta_tree_view.tag_configure( "deleted", background = "red" )
+        self.delta_tree_view.tag_configure( "new_entry", background = "#81ed81" )  # Light green
+        self.delta_tree_view.tag_configure( "deleted", background = "#ff9191" )  # Light red
 
     def clear_all_displays( self ):
 
