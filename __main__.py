@@ -71,8 +71,9 @@ class MainWindow:
         self.root_tree_view_label = tk.Label( display_frame, text = "Scan Result" )
         self.root_tree_view_label.grid( row = 0, column = 0, sticky = tk.W )
         self.root_tree_view = ttk.Treeview( display_frame )
-        self.root_tree_view.config( show = ["headings"] )  # Hide the tree.
+        # self.root_tree_view.config( show = ["headings"] )  # Hide the tree.
         self.root_tree_view.config( columns = ("content", "size") )
+        self.root_tree_view.column( "#0", width = 100 )
         self.root_tree_view.column( "content", width = 600 )
         self.root_tree_view.column( "size", width = 200 )
         self.root_tree_view.heading( "content", text = "Content" )
@@ -158,12 +159,20 @@ class MainWindow:
 
     def display_root_tree_view( self ):
 
-        for entry_info in self.current_scan_result.entry_infos:
+        self.insert_entry_infos( "", self.current_scan_result.entry_infos, 1 )
 
-            self.root_tree_view.insert( "", tk.END, entry_info.path )
-            self.root_tree_view.set( entry_info.path, "content", entry_info.path )
+    def insert_entry_infos( self, parent_key, entry_infos, depth ):
+
+        indent = "    " * ( depth - 1 )
+
+        for entry_info in entry_infos:
+
+            self.root_tree_view.insert( parent_key, tk.END, entry_info.path )
+            self.root_tree_view.set( entry_info.path, "content", indent + entry_info.path )
             self.root_tree_view.set( entry_info.path, "size", str( entry_info.size / self.unit_divisor ) +
                                      self.unit_option.get() )
+
+            self.insert_entry_infos( entry_info.path, entry_info.sub_entry_infos, depth + 1 )
 
     def display_delta_tree_view( self ):
 
@@ -335,15 +344,15 @@ class MainWindow:
 
             elif entry.is_dir():
 
+                entry_info.entry_type = EntryType.Dir
+                entry_info.size = self.get_dir_size( entry )
+
                 # If depth isn't exhausted, recursively get and append all sub-entries, but exclude itself.
                 if operating_depth < self.depth:
-                    for entry_info in self.get_dir_info( entry_info.path, operating_depth + 1 ):
-                        entry_infos.append( entry_info )
-                # If depth is exhausted, simply append itself.
-                else:
-                    entry_info.entry_type = EntryType.Dir
-                    entry_info.size = self.get_dir_size( entry )
-                    entry_infos.append( entry_info )
+                    for sub_entry_info in self.get_dir_info( entry_info.path, operating_depth + 1 ):
+                        entry_info.sub_entry_infos.append( sub_entry_info )
+
+                entry_infos.append( entry_info )
 
             else:
                 tkmessagebox.showerror( "Error", entry_info.path + " is neither file nor directory? Aborted." )
