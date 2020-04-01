@@ -362,11 +362,23 @@ class MainWindow:
 
     def sort_entry_infos_lexically( self, entry_infos ):
 
-        return sorted( entry_infos, key = lambda item: item.path.casefold() )
+        entry_infos = sorted( entry_infos, key = lambda item: item.path.casefold() )
+
+        for entry_info in entry_infos:
+
+            entry_info.sub_entry_infos = self.sort_entry_infos_lexically( entry_info.sub_entry_infos )
+
+        return entry_infos
 
     def sort_entry_infos_by_size( self, entry_infos ):
 
-        return sorted( entry_infos, key = lambda item: item.size )
+        entry_infos = sorted( entry_infos, key = lambda item: item.size )
+
+        for entry_info in entry_infos:
+
+            entry_info.sub_entry_infos = self.sort_entry_infos_by_size( entry_info.sub_entry_infos )
+
+        return entry_infos
 
     def sort_entry_deltas_lexically( self, entry_deltas ):
 
