@@ -1,6 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
+
 class EntryInfosDisplay:
 
     def __init__( self, treeview ):

@@ -64,6 +64,18 @@ class MainWindow:
         self.depth = 1
         self.depth_entry_box.insert( 0, self.depth )
 
+        ## Hierarchical vs. depth display
+        self.hierarchy_or_depth = tk.IntVar()
+        self.hierarchy_or_depth.set( 1 )
+        self.hierarchy_display_radio_button = tk.Radiobutton( input_frame, text = "Display by hierarchy",
+                                                              variable = self.hierarchy_or_depth, value = 1,
+                                                              command = self.on_hierarchy_display_selected )
+        self.depth_display_radio_button = tk.Radiobutton( input_frame, text = "Display by depth",
+                                                          variable = self.hierarchy_or_depth, value = 2,
+                                                          command = self.on_depth_display_selected )
+        self.hierarchy_display_radio_button.grid( row = 1, column = 4 )
+        self.depth_display_radio_button.grid( row = 1, column = 5 )
+
         # Display
 
         display_frame = tk.Frame( master_frame )
@@ -99,9 +111,11 @@ class MainWindow:
 
         self.current_scan_result = ScanResult( "", self.depth, [] )
 
-        self.current_entry_deltas = []
+        self.displayed_entry_infos = []
 
         self.current_entry_infos_sorting_function = self.sort_entry_infos_lexically
+
+        self.current_entry_deltas = []
 
         self.MAXDEPTH = 5
 
@@ -134,8 +148,8 @@ class MainWindow:
         self.set_current_scan_result( target_dir_path, self.depth, target_entry_infos )
 
         # Display.
-        self.entry_infos_display.display( self.current_scan_result.entry_infos,
-                                          self.current_entry_infos_sorting_function, self.unit )
+        self.display_entry_infos( self.current_scan_result.entry_infos,
+                                  self.current_entry_infos_sorting_function, self.unit )
 
     def on_sort_button_clicked( self, entry_infos_sorting_function, entry_deltas_sorting_function ):
 
@@ -144,8 +158,7 @@ class MainWindow:
             return
 
         # Sort and display entry infos.
-        self.entry_infos_display.display( self.current_scan_result.entry_infos,
-                                          entry_infos_sorting_function, self.unit )
+        self.display_entry_infos( self.displayed_entry_infos, entry_infos_sorting_function, self.unit )
         self.current_entry_infos_sorting_function = entry_infos_sorting_function
 
         # Sort and display entry deltas, if any.
@@ -159,9 +172,36 @@ class MainWindow:
         self.unit.divisor = 1024 ** self.unit_options.index( selected )
         self.unit.postfix = self.unit_option.get()
 
-        self.entry_infos_display.display( self.current_scan_result.entry_infos,
-                                          self.current_entry_infos_sorting_function, self.unit )
+        self.display_entry_infos( self.displayed_entry_infos, self.current_entry_infos_sorting_function, self.unit )
+
         self.display_delta_tree_view()
+
+    def on_hierarchy_display_selected( self ):
+
+        self.display_entry_infos( self.current_scan_result.entry_infos,
+                                  self.current_entry_infos_sorting_function, self.unit )
+
+    def on_depth_display_selected( self ):
+
+        entry_infos_to_display = []
+
+        for entry_info in self.current_scan_result.entry_infos:
+
+            if len( entry_info.sub_entry_infos ) >= 1:
+
+                entry_infos_to_display += entry_info.get_flat_sub_entry_infos( 5 )
+
+            else:
+
+                entry_infos_to_display.append( entry_info )
+
+        self.display_entry_infos( entry_infos_to_display, self.current_entry_infos_sorting_function, self.unit )
+
+    def display_entry_infos( self, entry_infos, sorting_function, unit ):
+
+        self.entry_infos_display.display( entry_infos, sorting_function, self.unit )
+
+        self.displayed_entry_infos = entry_infos
 
     def display_delta_tree_view( self ):
 
