@@ -1,6 +1,7 @@
-from reportwindow import ReportWindow
 from entryclasses import *
 from scanresult import ScanResult
+from entry_infos_display import EntryInfosDisplay
+from unit import Unit
 
 import os
 import tkinter as tk
@@ -49,7 +50,8 @@ class MainWindow:
         self.unit_divisor = 1
         self.unit_options = ["B", "KB", "MB", "GB"]
         self.unit_option = tk.StringVar()
-        self.unit_option.set( self.unit_options[ 0] )
+        self.unit_option.set( self.unit_options[ 0 ] )
+        self.unit = Unit( self.unit_divisor, self.unit_option.get() )
         self.unit_options_menu = tk.OptionMenu( input_frame, self.unit_option, *self.unit_options,
                                                 command = lambda selected: self.on_unit_selected( selected ) )
         self.unit_options_menu.grid( row = 1, column = 1 )
@@ -67,18 +69,19 @@ class MainWindow:
         display_frame = tk.Frame( master_frame )
         display_frame.grid( row = 1, column = 0 )
 
-        ## Root tree view
-        self.root_tree_view_label = tk.Label( display_frame, text = "Scan Result" )
-        self.root_tree_view_label.grid( row = 0, column = 0, sticky = tk.W )
-        self.root_tree_view = ttk.Treeview( display_frame )
+        ## Entry infos display
+        self.entry_infos_display_label = tk.Label( display_frame, text = "Scan Result" )
+        self.entry_infos_display_label.grid( row = 0, column = 0, sticky = tk.W )
+        entry_infos_display_treeview = ttk.Treeview( display_frame )
         # self.root_tree_view.config( show = ["headings"] )  # Hide the tree.
-        self.root_tree_view.config( columns = ("content", "size") )
-        self.root_tree_view.column( "#0", width = 100 )
-        self.root_tree_view.column( "content", width = 600 )
-        self.root_tree_view.column( "size", width = 200 )
-        self.root_tree_view.heading( "content", text = "Content" )
-        self.root_tree_view.heading( "size", text = "Size" )
-        self.root_tree_view.grid( row = 1, column = 0 )
+        entry_infos_display_treeview.config( columns = ("content", "size") )
+        entry_infos_display_treeview.column( "#0", width = 100 )
+        entry_infos_display_treeview.column( "content", width = 600 )
+        entry_infos_display_treeview.column( "size", width = 200 )
+        entry_infos_display_treeview.heading( "content", text = "Content" )
+        entry_infos_display_treeview.heading( "size", text = "Size" )
+        entry_infos_display_treeview.grid( row = 1, column = 0 )
+        self.entry_infos_display = EntryInfosDisplay( entry_infos_display_treeview )
 
         ## Delta tree view
         self.delta_tree_view_label = tk.Label( display_frame, text = "Comparison" )
@@ -97,6 +100,8 @@ class MainWindow:
         self.current_scan_result = ScanResult( "", self.depth, [] )
 
         self.current_entry_deltas = []
+
+        self.current_entry_infos_sorting_function = self.sort_entry_infos_lexically
 
         self.MAXDEPTH = 5
 
@@ -129,8 +134,8 @@ class MainWindow:
         self.set_current_scan_result( target_dir_path, self.depth, target_entry_infos )
 
         # Display.
-        self.clear_all_displays()
-        self.display_root_tree_view()
+        self.entry_infos_display.display( self.current_scan_result.entry_infos,
+                                          self.current_entry_infos_sorting_function, self.unit )
 
     def on_sort_button_clicked( self, entry_infos_sorting_function, entry_deltas_sorting_function ):
 
@@ -139,9 +144,9 @@ class MainWindow:
             return
 
         # Sort and display entry infos.
-        self.current_scan_result.entry_infos = entry_infos_sorting_function( self.current_scan_result.entry_infos )
-        self.clear_tree_view( self.root_tree_view )
-        self.display_root_tree_view()
+        self.entry_infos_display.display( self.current_scan_result.entry_infos,
+                                          entry_infos_sorting_function, self.unit )
+        self.current_entry_infos_sorting_function = entry_infos_sorting_function
 
         # Sort and display entry deltas, if any.
         if len( self.current_entry_deltas ) > 0:
@@ -151,28 +156,12 @@ class MainWindow:
 
     def on_unit_selected( self, selected ):
 
-        self.unit_divisor = 1024 ** self.unit_options.index( selected )
+        self.unit.divisor = 1024 ** self.unit_options.index( selected )
+        self.unit.postfix = self.unit_option.get()
 
-        self.clear_all_displays()
-        self.display_root_tree_view()
+        self.entry_infos_display.display( self.current_scan_result.entry_infos,
+                                          self.current_entry_infos_sorting_function, self.unit )
         self.display_delta_tree_view()
-
-    def display_root_tree_view( self ):
-
-        self.insert_entry_infos( "", self.current_scan_result.entry_infos, 1 )
-
-    def insert_entry_infos( self, parent_key, entry_infos, depth ):
-
-        indent = "    " * ( depth - 1 )
-
-        for entry_info in entry_infos:
-
-            self.root_tree_view.insert( parent_key, tk.END, entry_info.path )
-            self.root_tree_view.set( entry_info.path, "content", indent + entry_info.path )
-            self.root_tree_view.set( entry_info.path, "size", str( entry_info.size / self.unit_divisor ) +
-                                     self.unit_option.get() )
-
-            self.insert_entry_infos( entry_info.path, entry_info.sub_entry_infos, depth + 1 )
 
     def display_delta_tree_view( self ):
 
@@ -195,7 +184,7 @@ class MainWindow:
 
     def clear_all_displays( self ):
 
-        self.clear_tree_view( self.root_tree_view )
+        self.entry_infos_display.clear()
         self.clear_tree_view( self.delta_tree_view )
 
     def clear_tree_view( self, tree_view ):
