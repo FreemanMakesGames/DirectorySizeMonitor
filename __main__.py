@@ -148,8 +148,10 @@ class MainWindow:
         self.set_current_scan_result( target_dir_path, self.depth, target_entry_infos )
 
         # Display.
-        self.display_entry_infos( self.current_scan_result.entry_infos,
-                                  self.current_entry_infos_sorting_function, self.unit )
+        if self.hierarchy_or_depth.get() == 1:
+            self.display_entry_infos_by_hierarchy( self.current_scan_result.entry_infos )
+        else:
+            self.display_entry_infos_by_depth( self.current_scan_result.entry_infos )
 
     def on_sort_button_clicked( self, entry_infos_sorting_function, entry_deltas_sorting_function ):
 
@@ -178,14 +180,23 @@ class MainWindow:
 
     def on_hierarchy_display_selected( self ):
 
-        self.display_entry_infos( self.current_scan_result.entry_infos,
-                                  self.current_entry_infos_sorting_function, self.unit )
+        # Can't pass self.displayed_entry_infos here, because flattened sub entry infos can't be
+        # Put back to their hierarchy.
+        self.display_entry_infos_by_hierarchy( self.current_scan_result.entry_infos )
+
+    def display_entry_infos_by_hierarchy( self, entry_infos ):
+
+        self.display_entry_infos( entry_infos, self.current_entry_infos_sorting_function, self.unit )
 
     def on_depth_display_selected( self ):
 
+        self.display_entry_infos_by_depth( self.current_scan_result.entry_infos )
+
+    def display_entry_infos_by_depth( self, entry_infos ):
+
         entry_infos_to_display = []
 
-        for entry_info in self.current_scan_result.entry_infos:
+        for entry_info in entry_infos:
 
             if len( entry_info.sub_entry_infos ) >= 1:
 
