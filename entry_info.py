@@ -1,11 +1,14 @@
-class EntryType:
+from entry_interface import IEntry
+
+
+class EntryInfoType:
 
     Unset = 0
     File = 1
     Dir = 2
 
 
-class EntryInfo:
+class EntryInfo( IEntry ):
 
     """ An "entry" is either a file or a directory.
 
@@ -49,21 +52,10 @@ class EntryInfo:
 
         return result
 
+    def get_path( self ):
 
-class DeltaType:
+        return self.path
 
-    Unset = 0
-    NoDiff = 1
-    SizeDiff = 2
-    NewEntry = 3
-    Deleted = 4
+    def get_size( self ):
 
-
-class EntryDelta:
-
-    """ How much has the size of an entry at a certain path changed"""
-
-    def __init__( self, path, delta, delta_type ):
-        self.path = path
-        self.delta = delta
-        self.delta_type = delta_type
+        return self.size

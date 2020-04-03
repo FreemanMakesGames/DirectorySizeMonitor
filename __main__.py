@@ -1,5 +1,6 @@
-from entryclasses import *
-from scanresult import ScanResult
+from entry_info import *
+from entry_delta import *
+from scan_result import ScanResult
 from entry_infos_display import EntryInfosDisplay
 from unit import Unit
 
@@ -224,9 +225,9 @@ class MainWindow:
                                       self.unit_option.get() )
 
             # Assign tag based on delta type, for highlighting.
-            if entry_delta.delta_type == DeltaType.NewEntry:
+            if entry_delta.delta_type == EntryDeltaType.NewEntry:
                 self.delta_tree_view.item( entry_delta.path, tags = "new_entry" )
-            elif entry_delta.delta_type == DeltaType.Deleted:
+            elif entry_delta.delta_type == EntryDeltaType.Deleted:
                 self.delta_tree_view.item( entry_delta.path, tags = "deleted" )
 
         # Highlight rows based on their tag.
@@ -324,14 +325,14 @@ class MainWindow:
                     if entry_info.size != loaded_entry_info[ "size" ]:
 
                         entry_deltas.append( EntryDelta( entry_info.path, entry_info.size -
-                                                         loaded_entry_info[ "size" ], DeltaType.SizeDiff ) )
+                                                         loaded_entry_info[ "size" ], EntryDeltaType.SizeDiff ) )
 
                     break
 
             # The entry is newly created.
             if not entry_matches:
 
-                entry_deltas.append( EntryDelta( entry_info.path, entry_info.size, DeltaType.NewEntry ) )
+                entry_deltas.append( EntryDelta( entry_info.path, entry_info.size, EntryDeltaType.NewEntry ) )
 
         for loaded_entry_info in loaded_entry_infos:
 
@@ -348,7 +349,7 @@ class MainWindow:
             if entry_deleted:
 
                 entry_deltas.append( EntryDelta( loaded_entry_info[ "path" ], -loaded_entry_info[ "size" ],
-                                                 DeltaType.Deleted ) )
+                                                 EntryDeltaType.Deleted ) )
 
         self.current_entry_deltas = entry_deltas
 
@@ -371,11 +372,11 @@ class MainWindow:
         for entry in os.scandir( target_dir_path ):
 
             # Init entry info.
-            entry_info = EntryInfo( target_dir_path + "/" + entry.name, EntryType.Unset, 0, [] )
+            entry_info = EntryInfo( target_dir_path + "/" + entry.name, EntryInfoType.Unset, 0, [] )
 
             if entry.is_file():
 
-                entry_info.entry_type = EntryType.File
+                entry_info.entry_type = EntryInfoType.File
                 entry_info.size = os.path.getsize( entry )
 
                 entry_infos.append( entry_info )
@@ -384,7 +385,7 @@ class MainWindow:
 
             elif entry.is_dir():
 
-                entry_info.entry_type = EntryType.Dir
+                entry_info.entry_type = EntryInfoType.Dir
                 entry_info.size = self.get_dir_size( entry )
 
                 # If depth isn't exhausted, recursively get and append all sub-entries, but exclude itself.
