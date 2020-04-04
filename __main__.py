@@ -2,6 +2,7 @@ from entry_info import *
 from entry_delta import *
 from scan_result import ScanResult
 from entry_infos_display import EntryInfosDisplay
+from entry_deltas_display import EntryDeltasDisplay
 from unit import Unit
 
 import os
@@ -83,30 +84,31 @@ class MainWindow:
         display_frame.grid( row = 1, column = 0 )
 
         ## Entry infos display
-        self.entry_infos_display_label = tk.Label( display_frame, text = "Scan Result" )
-        self.entry_infos_display_label.grid( row = 0, column = 0, sticky = tk.W )
-        entry_infos_display_treeview = ttk.Treeview( display_frame )
+        entry_infos_display_label = tk.Label( display_frame, text = "Scan Result" )
+        entry_infos_display_label.grid( row = 0, column = 0, sticky = tk.W )
+        entry_infos_treeview = ttk.Treeview( display_frame )
         # self.root_tree_view.config( show = ["headings"] )  # Hide the tree.
-        entry_infos_display_treeview.config( columns = ("content", "size") )
-        entry_infos_display_treeview.column( "#0", width = 100 )
-        entry_infos_display_treeview.column( "content", width = 600 )
-        entry_infos_display_treeview.column( "size", width = 200 )
-        entry_infos_display_treeview.heading( "content", text = "Content" )
-        entry_infos_display_treeview.heading( "size", text = "Size" )
-        entry_infos_display_treeview.grid( row = 1, column = 0 )
-        self.entry_infos_display = EntryInfosDisplay( entry_infos_display_treeview )
+        entry_infos_treeview.config( columns = ("content", "size") )
+        entry_infos_treeview.column( "#0", width = 100 )
+        entry_infos_treeview.column( "content", width = 600 )
+        entry_infos_treeview.column( "size", width = 200 )
+        entry_infos_treeview.heading( "content", text = "Content" )
+        entry_infos_treeview.heading( "size", text = "Size" )
+        entry_infos_treeview.grid( row = 1, column = 0 )
+        self.entry_infos_display = EntryInfosDisplay( entry_infos_treeview )
 
         ## Delta tree view
-        self.delta_tree_view_label = tk.Label( display_frame, text = "Comparison" )
-        self.delta_tree_view_label.grid( row = 2, column = 0, sticky = tk.W )
-        self.delta_tree_view = ttk.Treeview( display_frame )
-        self.delta_tree_view.config( show = [ "headings" ] )  # Hide the tree.
-        self.delta_tree_view.config( columns = ( "entry", "delta" ) )
-        self.delta_tree_view.column( "entry", width = 600 )
-        self.delta_tree_view.column( "delta", width = 200 )
-        self.delta_tree_view.heading( "entry", text = "Entry" )
-        self.delta_tree_view.heading( "delta", text = "Delta" )
-        self.delta_tree_view.grid( row = 3, column = 0 )
+        delta_tree_view_label = tk.Label( display_frame, text = "Comparison" )
+        delta_tree_view_label.grid( row = 2, column = 0, sticky = tk.W )
+        entry_deltas_treeview = ttk.Treeview( display_frame )
+        entry_deltas_treeview.config( show = [ "headings" ] )  # Hide the tree.
+        entry_deltas_treeview.config( columns = ( "entry", "delta" ) )
+        entry_deltas_treeview.column( "entry", width = 600 )
+        entry_deltas_treeview.column( "delta", width = 200 )
+        entry_deltas_treeview.heading( "entry", text = "Entry" )
+        entry_deltas_treeview.heading( "delta", text = "Delta" )
+        entry_deltas_treeview.grid( row = 3, column = 0 )
+        self.entry_deltas_display = EntryDeltasDisplay( entry_deltas_treeview )
 
         """ Backend """
 
@@ -115,8 +117,9 @@ class MainWindow:
         self.displayed_entry_infos = []
 
         self.current_entry_infos_sorting_function = self.sort_entry_infos_lexically
+        self.current_entry_deltas_sorting_function = self.sort_entry_deltas_lexically
 
-        self.current_entry_deltas = []
+        self.displayed_entry_deltas = []
 
         self.MAXDEPTH = 5
 
@@ -165,10 +168,9 @@ class MainWindow:
         self.current_entry_infos_sorting_function = entry_infos_sorting_function
 
         # Sort and display entry deltas, if any.
-        if len( self.current_entry_deltas ) > 0:
-            self.current_entry_deltas = entry_deltas_sorting_function( self.current_entry_deltas )
-            self.clear_tree_view( self.delta_tree_view )
-            self.display_delta_tree_view()
+        if len( self.displayed_entry_deltas ) > 0:
+            self.display_entry_deltas( self.displayed_entry_deltas, entry_deltas_sorting_function )
+            self.current_entry_deltas_sorting_function = entry_deltas_sorting_function
 
     def on_unit_selected( self, selected ):
 
@@ -177,7 +179,7 @@ class MainWindow:
 
         self.display_entry_infos( self.displayed_entry_infos, self.current_entry_infos_sorting_function, self.unit )
 
-        self.display_delta_tree_view()
+        self.display_entry_deltas( self.displayed_entry_deltas, self.current_entry_deltas_sorting_function )
 
     def on_hierarchy_display_selected( self ):
 
@@ -201,7 +203,7 @@ class MainWindow:
 
             if len( entry_info.sub_entry_infos ) >= 1:
 
-                entry_infos_to_display += entry_info.get_flat_sub_entry_infos( 5 )
+                entry_infos_to_display += entry_info.get_flat_sub_entries( 5 )
 
             else:
 
@@ -215,35 +217,23 @@ class MainWindow:
 
         self.displayed_entry_infos = entry_infos
 
-    def display_delta_tree_view( self ):
+    def display_entry_deltas( self, entry_deltas, sorting_function ):
 
-        for entry_delta in self.current_entry_deltas:
+        self.entry_deltas_display.display( entry_deltas, sorting_function, self.unit )
 
-            self.delta_tree_view.insert( "", tk.END, entry_delta.path )
-            self.delta_tree_view.set( entry_delta.path, "entry", entry_delta.path )
-            self.delta_tree_view.set( entry_delta.path, "delta", str( entry_delta.delta / self.unit_divisor ) +
-                                      self.unit_option.get() )
-
-            # Assign tag based on delta type, for highlighting.
-            if entry_delta.delta_type == EntryDeltaType.NewEntry:
-                self.delta_tree_view.item( entry_delta.path, tags = "new_entry" )
-            elif entry_delta.delta_type == EntryDeltaType.Deleted:
-                self.delta_tree_view.item( entry_delta.path, tags = "deleted" )
-
-        # Highlight rows based on their tag.
-        self.delta_tree_view.tag_configure( "new_entry", background = "#81ed81" )  # Light green
-        self.delta_tree_view.tag_configure( "deleted", background = "#ff9191" )  # Light red
+        self.displayed_entry_deltas = entry_deltas
 
     def clear_all_displays( self ):
 
         self.entry_infos_display.clear()
-        self.clear_tree_view( self.delta_tree_view )
+        self.entry_deltas_display.clear()
 
     def clear_tree_view( self, tree_view ):
 
         tree_view.delete( *tree_view.get_children() )
 
     def set_depth( self, target_depth ):
+
         self.depth = target_depth
         self.depth_entry_box.delete( 0, tk.END )
         self.depth_entry_box.insert( 0, target_depth )
@@ -310,52 +300,10 @@ class MainWindow:
 
         # Compare.
 
-        entry_deltas = []  # TODO: Refactoring: Should it use a new class, despite having the same data types as fields?
-
-        for entry_info in self.current_scan_result.entry_infos:
-
-            entry_matches = False
-
-            for loaded_entry_info in loaded_entry_infos:  # loadedEntryInfo is a dict.
-
-                if entry_info.path == loaded_entry_info[ "path" ]:
-
-                    entry_matches = True
-
-                    if entry_info.size != loaded_entry_info[ "size" ]:
-
-                        entry_deltas.append( EntryDelta( entry_info.path, entry_info.size -
-                                                         loaded_entry_info[ "size" ], EntryDeltaType.SizeDiff ) )
-
-                    break
-
-            # The entry is newly created.
-            if not entry_matches:
-
-                entry_deltas.append( EntryDelta( entry_info.path, entry_info.size, EntryDeltaType.NewEntry ) )
-
-        for loaded_entry_info in loaded_entry_infos:
-
-            entry_deleted = True
-
-            for entry_info in self.current_scan_result.entry_infos:
-
-                if loaded_entry_info[ "path" ] == entry_info.path:
-
-                    entry_deleted = False
-
-                    break
-
-            if entry_deleted:
-
-                entry_deltas.append( EntryDelta( loaded_entry_info[ "path" ], -loaded_entry_info[ "size" ],
-                                                 EntryDeltaType.Deleted ) )
-
-        self.current_entry_deltas = entry_deltas
+        entry_deltas = self.get_entry_deltas( self.current_scan_result.entry_infos, loaded_entry_infos )
 
         # Display.
-        self.clear_tree_view( self.delta_tree_view )
-        self.display_delta_tree_view()
+        self.display_entry_deltas( entry_deltas, self.current_entry_deltas_sorting_function )
 
     def get_dir_info( self, target_dir_path, operating_depth ):
 
@@ -391,7 +339,7 @@ class MainWindow:
                 # If depth isn't exhausted, recursively get and append all sub-entries, but exclude itself.
                 if operating_depth < self.depth:
                     for sub_entry_info in self.get_dir_info( entry_info.path, operating_depth + 1 ):
-                        entry_info.sub_entry_infos.append( sub_entry_info )
+                        entry_info.sub_entries.append( sub_entry_info )
 
                 entry_infos.append( entry_info )
 
@@ -401,13 +349,69 @@ class MainWindow:
 
         return entry_infos
 
+    def get_entry_deltas( self, current_entry_infos, loaded_entry_infos ):
+
+        result = []
+
+        for current_entry_info in current_entry_infos:
+
+            entry_matches = False
+
+            for loaded_entry_info in loaded_entry_infos:  # loaded_entry_infos is a dict read from JSON.
+
+                if current_entry_info.path == loaded_entry_info[ "path" ]:
+
+                    entry_matches = True
+
+                    if current_entry_info.size != loaded_entry_info[ "size" ]:
+
+                        entry_delta_to_append = EntryDelta( current_entry_info.path, EntryDeltaType.SizeDiff,
+                                                            current_entry_info.size - loaded_entry_info[ "size" ], [] )
+                        entry_delta_to_append.sub_entries = self.get_entry_deltas( current_entry_info.sub_entries,
+                                                                                   loaded_entry_info[ "sub_entries" ] )
+
+                        result.append( entry_delta_to_append )
+
+                    break
+
+            # The entry is newly created.
+            if not entry_matches:
+
+                entry_delta_to_append = EntryDelta( current_entry_info.path, EntryDeltaType.NewEntry,
+                                                    current_entry_info.size, [] )
+                entry_delta_to_append.sub_entries = self.get_entry_deltas( current_entry_info.sub_entries, [] )
+
+                result.append( entry_delta_to_append )
+
+        for loaded_entry_info in loaded_entry_infos:
+
+            entry_deleted = True
+
+            for current_entry_info in current_entry_infos:
+
+                if loaded_entry_info[ "path" ] == current_entry_info.path:
+
+                    entry_deleted = False
+
+                    break
+
+            if entry_deleted:
+
+                entry_delta_to_append = EntryDelta( loaded_entry_info[ "path" ], EntryDeltaType.Deleted,
+                                                    -loaded_entry_info[ "size" ], [] )
+                entry_delta_to_append.sub_entries = self.get_entry_deltas( [], loaded_entry_info[ "sub_entries" ] )
+
+                result.append( entry_delta_to_append )
+
+        return result
+
     def sort_entry_infos_lexically( self, entry_infos ):
 
         entry_infos = sorted( entry_infos, key = lambda item: item.path.casefold() )
 
         for entry_info in entry_infos:
 
-            entry_info.sub_entry_infos = self.sort_entry_infos_lexically( entry_info.sub_entry_infos )
+            entry_info.sub_entries = self.sort_entry_infos_lexically( entry_info.sub_entries )
 
         return entry_infos
 
@@ -417,7 +421,7 @@ class MainWindow:
 
         for entry_info in entry_infos:
 
-            entry_info.sub_entry_infos = self.sort_entry_infos_by_size( entry_info.sub_entry_infos )
+            entry_info.sub_entries = self.sort_entry_infos_by_size( entry_info.sub_entries )
 
         return entry_infos
 
