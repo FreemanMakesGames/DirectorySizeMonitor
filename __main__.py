@@ -101,8 +101,9 @@ class MainWindow:
         delta_tree_view_label = tk.Label( display_frame, text = "Comparison" )
         delta_tree_view_label.grid( row = 2, column = 0, sticky = tk.W )
         entry_deltas_treeview = ttk.Treeview( display_frame )
-        entry_deltas_treeview.config( show = [ "headings" ] )  # Hide the tree.
+        # entry_deltas_treeview.config( show = [ "headings" ] )  # Hide the tree.
         entry_deltas_treeview.config( columns = ( "entry", "delta" ) )
+        entry_deltas_treeview.column( "#0", width = 100 )
         entry_deltas_treeview.column( "entry", width = 600 )
         entry_deltas_treeview.column( "delta", width = 200 )
         entry_deltas_treeview.heading( "entry", text = "Entry" )

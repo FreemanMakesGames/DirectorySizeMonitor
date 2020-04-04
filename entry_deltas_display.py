@@ -13,8 +13,8 @@ class EntryDeltasDisplay( EntryDisplay ):
 
         for entry_delta in i_entries:
 
-            self.treeview.insert( "", tk.END, entry_delta.path )
-            self.treeview.set( entry_delta.path, "entry", entry_delta.path )
+            self.treeview.insert( parent_key, tk.END, entry_delta.path )
+            self.treeview.set( entry_delta.path, "entry", indent + entry_delta.path )
             self.treeview.set( entry_delta.path, "delta", str( entry_delta.size / unit.divisor ) + unit.postfix )
 
             # Assign tag based on delta type, for highlighting.
