@@ -151,9 +151,9 @@ class MainWindow:
 
         # Display.
         if self.hierarchy_or_depth.get() == 1:
-            self.display_entry_infos_by_hierarchy( self.current_scan_result.entry_infos )
+            self.display_entry_infos_by_hierarchy()
         else:
-            self.display_entry_infos_by_depth( self.current_scan_result.entry_infos )
+            self.display_entry_infos_by_depth()
 
     def on_sort_button_clicked( self, entries_sorting_function ):
 
@@ -161,43 +161,40 @@ class MainWindow:
             tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
             return
 
-        # Sort and display entry infos.
-        self.display_entry_infos( self.displayed_entry_infos, entries_sorting_function, self.unit )
-
-        # Sort and display entry deltas, if any.
-        if len( self.displayed_entry_deltas ) > 0:
-            self.display_entry_deltas( self.displayed_entry_deltas, entries_sorting_function )
-
         self.current_entries_sorting_function = entries_sorting_function
+
+        self.display_entry_infos( self.displayed_entry_infos )
+
+        if len( self.displayed_entry_deltas ) > 0:
+            self.display_entry_deltas( self.displayed_entry_deltas )
 
     def on_unit_selected( self, selected ):
 
         self.unit.divisor = 1024 ** self.unit_options.index( selected )
         self.unit.postfix = self.unit_option.get()
 
-        self.display_entry_infos( self.displayed_entry_infos, self.current_entries_sorting_function, self.unit )
-
-        self.display_entry_deltas( self.displayed_entry_deltas, self.current_entries_sorting_function )
+        self.display_entry_infos( self.displayed_entry_infos )
+        self.display_entry_deltas( self.displayed_entry_deltas )
 
     def on_hierarchy_display_selected( self ):
 
         # Can't pass self.displayed_entry_infos here, because flattened sub entry infos can't be
         # Put back to their hierarchy.
-        self.display_entry_infos_by_hierarchy( self.current_scan_result.entry_infos )
+        self.display_entry_infos_by_hierarchy()
 
-    def display_entry_infos_by_hierarchy( self, entry_infos ):
+    def display_entry_infos_by_hierarchy( self ):
 
-        self.display_entry_infos( entry_infos, self.current_entries_sorting_function, self.unit )
+        self.display_entry_infos( self.current_scan_result.entry_infos )
 
     def on_depth_display_selected( self ):
 
-        self.display_entry_infos_by_depth( self.current_scan_result.entry_infos )
+        self.display_entry_infos_by_depth()
 
-    def display_entry_infos_by_depth( self, entry_infos ):
+    def display_entry_infos_by_depth( self ):
 
         entry_infos_to_display = []
 
-        for entry_info in entry_infos:
+        for entry_info in self.current_scan_result.entry_infos:
 
             if len( entry_info.sub_entry_infos ) >= 1:
 
@@ -207,19 +204,19 @@ class MainWindow:
 
                 entry_infos_to_display.append( entry_info )
 
-        self.display_entry_infos( entry_infos_to_display, self.current_entries_sorting_function, self.unit )
+        self.display_entry_infos( entry_infos_to_display )
 
-    def display_entry_infos( self, entry_infos, sorting_function, unit ):
+    def display_entry_infos( self, entry_infos ):
 
-        self.entry_infos_display.display( entry_infos, sorting_function, self.unit )
+        self.displayed_entry_infos = self.current_entries_sorting_function( entry_infos )
 
-        self.displayed_entry_infos = entry_infos
+        self.entry_infos_display.display( self.displayed_entry_infos, self.unit )
 
-    def display_entry_deltas( self, entry_deltas, sorting_function ):
+    def display_entry_deltas( self, entry_deltas ):
 
-        self.entry_deltas_display.display( entry_deltas, sorting_function, self.unit )
+        self.displayed_entry_deltas = self.current_entries_sorting_function( entry_deltas )
 
-        self.displayed_entry_deltas = entry_deltas
+        self.entry_deltas_display.display( self.displayed_entry_deltas, self.unit )
 
     def clear_all_displays( self ):
 
@@ -301,7 +298,7 @@ class MainWindow:
         entry_deltas = self.get_entry_deltas( self.current_scan_result.entry_infos, loaded_entry_infos )
 
         # Display.
-        self.display_entry_deltas( entry_deltas, self.current_entries_sorting_function )
+        self.display_entry_deltas( entry_deltas )
 
     def get_dir_info( self, target_dir_path, operating_depth ):
 

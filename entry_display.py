@@ -10,11 +10,9 @@ class EntryDisplay:
 
         self.treeview = treeview
 
-    def display( self, i_entries, sorting_function, unit ):
+    def display( self, i_entries, unit ):
 
         self.clear()
-
-        i_entries = sorting_function( i_entries )
 
         self._insert_entries( "", i_entries, 1, unit )
 
