@@ -31,13 +31,11 @@ class MainWindow:
         self.scan_button.grid( row = 0, column = 0 )
 
         self.sort_lexically_button = tk.Button( input_frame, text = "Sort Lexically", command = lambda:
-                                                self.on_sort_button_clicked( self.sort_entry_infos_lexically,
-                                                                             self.sort_entry_deltas_lexically ) )
+                                                self.on_sort_button_clicked( self.sort_entries_lexically ) )
         self.sort_lexically_button.grid( row = 0, column = 1 )
 
         self.sort_by_size_button = tk.Button( input_frame, text = "Sort By Size", command = lambda:
-                                              self.on_sort_button_clicked( self.sort_entry_infos_by_size,
-                                                                           self.sort_entry_deltas_by_size ) )
+                                              self.on_sort_button_clicked( self.sort_entries_by_size ) )
         self.sort_by_size_button.grid( row = 0, column = 2 )
 
         self.save_button = tk.Button( input_frame, text = "Save Result", command = self.save_result )
@@ -117,8 +115,7 @@ class MainWindow:
 
         self.displayed_entry_infos = []
 
-        self.current_entry_infos_sorting_function = self.sort_entry_infos_lexically
-        self.current_entry_deltas_sorting_function = self.sort_entry_deltas_lexically
+        self.current_entries_sorting_function = self.sort_entries_lexically
 
         self.displayed_entry_deltas = []
 
@@ -158,29 +155,29 @@ class MainWindow:
         else:
             self.display_entry_infos_by_depth( self.current_scan_result.entry_infos )
 
-    def on_sort_button_clicked( self, entry_infos_sorting_function, entry_deltas_sorting_function ):
+    def on_sort_button_clicked( self, entries_sorting_function ):
 
         if self.current_scan_result.root_path == "":
             tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
             return
 
         # Sort and display entry infos.
-        self.display_entry_infos( self.displayed_entry_infos, entry_infos_sorting_function, self.unit )
-        self.current_entry_infos_sorting_function = entry_infos_sorting_function
+        self.display_entry_infos( self.displayed_entry_infos, entries_sorting_function, self.unit )
 
         # Sort and display entry deltas, if any.
         if len( self.displayed_entry_deltas ) > 0:
-            self.display_entry_deltas( self.displayed_entry_deltas, entry_deltas_sorting_function )
-            self.current_entry_deltas_sorting_function = entry_deltas_sorting_function
+            self.display_entry_deltas( self.displayed_entry_deltas, entries_sorting_function )
+
+        self.current_entries_sorting_function = entries_sorting_function
 
     def on_unit_selected( self, selected ):
 
         self.unit.divisor = 1024 ** self.unit_options.index( selected )
         self.unit.postfix = self.unit_option.get()
 
-        self.display_entry_infos( self.displayed_entry_infos, self.current_entry_infos_sorting_function, self.unit )
+        self.display_entry_infos( self.displayed_entry_infos, self.current_entries_sorting_function, self.unit )
 
-        self.display_entry_deltas( self.displayed_entry_deltas, self.current_entry_deltas_sorting_function )
+        self.display_entry_deltas( self.displayed_entry_deltas, self.current_entries_sorting_function )
 
     def on_hierarchy_display_selected( self ):
 
@@ -190,7 +187,7 @@ class MainWindow:
 
     def display_entry_infos_by_hierarchy( self, entry_infos ):
 
-        self.display_entry_infos( entry_infos, self.current_entry_infos_sorting_function, self.unit )
+        self.display_entry_infos( entry_infos, self.current_entries_sorting_function, self.unit )
 
     def on_depth_display_selected( self ):
 
@@ -210,7 +207,7 @@ class MainWindow:
 
                 entry_infos_to_display.append( entry_info )
 
-        self.display_entry_infos( entry_infos_to_display, self.current_entry_infos_sorting_function, self.unit )
+        self.display_entry_infos( entry_infos_to_display, self.current_entries_sorting_function, self.unit )
 
     def display_entry_infos( self, entry_infos, sorting_function, unit ):
 
@@ -304,7 +301,7 @@ class MainWindow:
         entry_deltas = self.get_entry_deltas( self.current_scan_result.entry_infos, loaded_entry_infos )
 
         # Display.
-        self.display_entry_deltas( entry_deltas, self.current_entry_deltas_sorting_function )
+        self.display_entry_deltas( entry_deltas, self.current_entries_sorting_function )
 
     def get_dir_info( self, target_dir_path, operating_depth ):
 
@@ -406,33 +403,25 @@ class MainWindow:
 
         return result
 
-    def sort_entry_infos_lexically( self, entry_infos ):
+    def sort_entries_lexically( self, entries ):
 
-        entry_infos = sorted( entry_infos, key = lambda item: item.path.casefold() )
+        entries = sorted( entries, key = lambda item: item.path.casefold() )
 
-        for entry_info in entry_infos:
+        for entry in entries:
 
-            entry_info.sub_entries = self.sort_entry_infos_lexically( entry_info.sub_entries )
+            entry.sub_entries = self.sort_entries_lexically( entry.sub_entries )
 
-        return entry_infos
+        return entries
 
-    def sort_entry_infos_by_size( self, entry_infos ):
+    def sort_entries_by_size( self, entries ):
 
-        entry_infos = sorted( entry_infos, key = lambda item: item.size )
+        entries = sorted( entries, key = lambda item: item.size )
 
-        for entry_info in entry_infos:
+        for entry in entries:
 
-            entry_info.sub_entries = self.sort_entry_infos_by_size( entry_info.sub_entries )
+            entry.sub_entries = self.sort_entries_by_size( entry.sub_entries )
 
-        return entry_infos
-
-    def sort_entry_deltas_lexically( self, entry_deltas ):
-
-        return sorted( entry_deltas, key = lambda item: item.path.casefold() )
-
-    def sort_entry_deltas_by_size( self, entry_deltas ):
-
-        return sorted( entry_deltas, key = lambda item: item.delta )
+        return entries
 
     def get_dir_size( self, dir_path ):
 
