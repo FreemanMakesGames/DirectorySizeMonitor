@@ -112,12 +112,12 @@ class MainWindow:
         """ Backend """
 
         self.current_scan_result = ScanResult( "", self.depth, [] )
+        self.current_entry_deltas = []
 
         self.displayed_entry_infos = []
+        self.displayed_entry_deltas = []
 
         self.current_entries_sorting_function = self.sort_entries_lexically
-
-        self.displayed_entry_deltas = []
 
         self.MAXDEPTH = 5
 
@@ -151,9 +151,9 @@ class MainWindow:
 
         # Display.
         if self.hierarchy_or_depth.get() == 1:
-            self.display_entry_infos_by_hierarchy()
+            self.display_entries_by_hierarchy()
         else:
-            self.display_entry_infos_by_depth()
+            self.display_entries_by_depth()
 
     def on_sort_button_clicked( self, entries_sorting_function ):
 
@@ -180,31 +180,22 @@ class MainWindow:
 
         # Can't pass self.displayed_entry_infos here, because flattened sub entry infos can't be
         # Put back to their hierarchy.
-        self.display_entry_infos_by_hierarchy()
+        self.display_entries_by_hierarchy()
 
-    def display_entry_infos_by_hierarchy( self ):
+    def display_entries_by_hierarchy( self ):
 
         self.display_entry_infos( self.current_scan_result.entry_infos )
+        self.display_entry_deltas( self.current_entry_deltas )
 
     def on_depth_display_selected( self ):
 
-        self.display_entry_infos_by_depth()
+        self.display_entries_by_depth()
 
-    def display_entry_infos_by_depth( self ):
+    def display_entries_by_depth( self ):
 
-        entry_infos_to_display = []
+        self.display_entry_infos( self.flatten_entries( self.current_scan_result.entry_infos ) )
 
-        for entry_info in self.current_scan_result.entry_infos:
-
-            if len( entry_info.sub_entry_infos ) >= 1:
-
-                entry_infos_to_display += entry_info.get_flat_sub_entries( 5 )
-
-            else:
-
-                entry_infos_to_display.append( entry_info )
-
-        self.display_entry_infos( entry_infos_to_display )
+        self.display_entry_deltas( self.flatten_entries( self.current_entry_deltas ) )
 
     def display_entry_infos( self, entry_infos ):
 
@@ -294,11 +285,10 @@ class MainWindow:
             return
 
         # Compare.
-
-        entry_deltas = self.get_entry_deltas( self.current_scan_result.entry_infos, loaded_entry_infos )
+        self.current_entry_deltas = self.get_entry_deltas( self.current_scan_result.entry_infos, loaded_entry_infos )
 
         # Display.
-        self.display_entry_deltas( entry_deltas )
+        self.display_entry_deltas( self.current_entry_deltas )
 
     def get_dir_info( self, target_dir_path, operating_depth ):
 
@@ -419,6 +409,22 @@ class MainWindow:
             entry.sub_entries = self.sort_entries_by_size( entry.sub_entries )
 
         return entries
+
+    def flatten_entries( self, entries ):
+
+        result = []
+
+        for entry in entries:
+
+            if len( entry.sub_entries ) >= 1:
+
+                result += entry.get_flat_sub_entries( 5 )
+
+            else:
+
+                result.append( entry )
+
+        return result
 
     def get_dir_size( self, dir_path ):
 
