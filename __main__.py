@@ -57,12 +57,11 @@ class MainWindow:
         self.unit_options_menu.grid( row = 1, column = 1 )
 
         ## Depth input
-        self.depth_label = tk.Label( input_frame, text = "Depth" )
-        self.depth_label.grid( row = 1, column = 2 )
-        self.depth_entry_box = tk.Entry( input_frame )
-        self.depth_entry_box.grid( row = 1, column = 3 )
-        self.depth = 1
-        self.depth_entry_box.insert( 0, self.depth )
+        tk.Label( input_frame, text = "Scan Depth" ).grid( row = 1, column = 2 )
+        self.scan_depth_entry_box = tk.Entry( input_frame )
+        self.scan_depth_entry_box.grid( row = 1, column = 3 )
+        self.scan_depth = 1
+        self.scan_depth_entry_box.insert( 0, self.scan_depth )
 
         ## Hierarchical vs. depth display
         self.hierarchy_or_depth = tk.IntVar()
@@ -111,7 +110,7 @@ class MainWindow:
 
         """ Backend """
 
-        self.current_scan_result = ScanResult( "", self.depth, [] )
+        self.current_scan_result = ScanResult( "", self.scan_depth, [] )
         self.current_entry_deltas = []
 
         self.displayed_entry_infos = []
@@ -132,22 +131,22 @@ class MainWindow:
             return
 
         # Get depth.
-        input_depth_string = self.depth_entry_box.get()
+        input_depth_string = self.scan_depth_entry_box.get()
         if not input_depth_string:  # Empty input
-            self.set_depth( 1 )
+            self.set_scan_depth( 1 )
         else:  # Non-empty input
             try:  # Integer input
-                self.depth = int( input_depth_string )
-                if self.depth < 1 or self.depth > self.MAXDEPTH:
+                self.scan_depth = int( input_depth_string )
+                if self.scan_depth < 1 or self.scan_depth > self.MAXDEPTH:
                     tkmessagebox.showerror( "Error", "Depth can only be between 1 to 5. Resetting to 1." )
-                    self.set_depth( 1 )
+                    self.set_scan_depth( 1 )
             except ValueError:  # Bad input
                 tkmessagebox.showerror( "Error", "Scan depth isn't an integer. Depth is set to 1." )
-                self.set_depth( 1 )
+                self.set_scan_depth( 1 )
 
         target_entry_infos = self.get_dir_info( target_dir_path, 1 )
 
-        self.set_current_scan_result( target_dir_path, self.depth, target_entry_infos )
+        self.set_current_scan_result( target_dir_path, self.scan_depth, target_entry_infos )
 
         # Display.
         if self.hierarchy_or_depth.get() == 1:
@@ -218,11 +217,11 @@ class MainWindow:
 
         tree_view.delete( *tree_view.get_children() )
 
-    def set_depth( self, target_depth ):
+    def set_scan_depth( self, target_depth ):
 
-        self.depth = target_depth
-        self.depth_entry_box.delete( 0, tk.END )
-        self.depth_entry_box.insert( 0, target_depth )
+        self.scan_depth = target_depth
+        self.scan_depth_entry_box.delete( 0, tk.END )
+        self.scan_depth_entry_box.insert( 0, target_depth )
 
     def save_result( self ):
 
@@ -322,7 +321,7 @@ class MainWindow:
                 entry_info.size = self.get_dir_size( entry )
 
                 # If depth isn't exhausted, recursively get and append all sub-entries, but exclude itself.
-                if operating_depth < self.depth:
+                if operating_depth < self.scan_depth:
                     for sub_entry_info in self.get_dir_info( entry_info.path, operating_depth + 1 ):
                         entry_info.sub_entries.append( sub_entry_info )
 
