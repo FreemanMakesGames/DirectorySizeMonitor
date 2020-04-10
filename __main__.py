@@ -340,12 +340,16 @@ class MainWindow:
             elif entry.is_dir():
 
                 entry_info.entry_type = EntryInfoType.Dir
-                entry_info.size = self.get_dir_size( entry )
 
-                # If depth isn't exhausted, recursively get and append all sub-entries, but exclude itself.
+                # If depth isn't exhausted, recursively get and append all sub-entries,
+                # And get this dir's size simply by summing up sub entries' sizes.
                 if operating_depth < self.scan_depth:
                     for sub_entry_info in self.get_dir_info( entry_info.path, operating_depth + 1 ):
                         entry_info.sub_entries.append( sub_entry_info )
+                        entry_info.size += sub_entry_info.size
+                # If depth is exhausted, just get this dir's size the slow way, which involves os module calls.
+                else:
+                    entry_info.size = self.get_dir_size( entry )
 
                 entry_infos.append( entry_info )
 
