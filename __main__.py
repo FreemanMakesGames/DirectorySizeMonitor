@@ -7,6 +7,7 @@ from entry_utils import *
 from unit import Unit
 
 import os
+import platform
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as tkfiledialog
@@ -444,6 +445,11 @@ class MainWindow:
             for fileName in file_names:
 
                 file_path = os.path.join( sub_dir_path, fileName )
+
+                # File path formatting for Windows
+                if platform.system() == "Windows":
+                    file_path = file_path.replace( "/", "\\" )
+                    file_path = "\\\\?\\" + file_path  # A prefix \\?\ for path length over 260 characters
 
                 if not os.path.islink( file_path ):
                     dir_size += os.path.getsize( file_path )
