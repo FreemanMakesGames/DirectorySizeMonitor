@@ -3,6 +3,7 @@ from entry_delta import *
 from scan_result import ScanResult
 from entry_infos_display import EntryInfosDisplay
 from entry_deltas_display import EntryDeltasDisplay
+from entry_utils import *
 from unit import Unit
 
 import os
@@ -74,6 +75,16 @@ class MainWindow:
                                                           command = self.on_depth_display_selected )
         self.hierarchy_display_radio_button.grid( row = 1, column = 4 )
         self.depth_display_radio_button.grid( row = 1, column = 5 )
+
+        ## Display-by-depth options
+        tk.Label( input_frame, text = "Display Depth" ).grid( row = 1, column = 6 )
+        self.display_depth_options = [ 1, 2, 3, 4, 5 ]
+        self.display_depth = tk.IntVar()
+        self.display_depth.set( 1 )
+        self.display_depth_menu = tk.OptionMenu( input_frame, self.display_depth, *self.display_depth_options,
+                                                 command = self.on_display_depth_selected )
+        self.display_depth_menu.config( state = tk.DISABLED )
+        self.display_depth_menu.grid( row = 1, column = 7 )
 
         # Display
 
@@ -175,11 +186,17 @@ class MainWindow:
         self.display_entry_infos( self.displayed_entry_infos )
         self.display_entry_deltas( self.displayed_entry_deltas )
 
+    def on_display_depth_selected( self, value ):
+
+        self.display_entries_by_depth()
+
     def on_hierarchy_display_selected( self ):
 
         # Can't pass self.displayed_entry_infos here, because flattened sub entry infos can't be
         # Put back to their hierarchy.
         self.display_entries_by_hierarchy()
+
+        self.display_depth_menu.config( state = tk.DISABLED )
 
     def display_entries_by_hierarchy( self ):
 
@@ -190,11 +207,15 @@ class MainWindow:
 
         self.display_entries_by_depth()
 
+        self.display_depth_menu.config( state = tk.NORMAL )
+
     def display_entries_by_depth( self ):
 
-        self.display_entry_infos( self.flatten_entries( self.current_scan_result.entry_infos ) )
+        self.display_entry_infos( EntryUtils.get_flat_entries( self.current_scan_result.entry_infos,
+                                                               self.display_depth.get() ) )
 
-        self.display_entry_deltas( self.flatten_entries( self.current_entry_deltas ) )
+        self.display_entry_deltas( EntryUtils.get_flat_entries( self.current_entry_deltas,
+                                                                self.display_depth.get() ) )
 
     def display_entry_infos( self, entry_infos ):
 
@@ -408,22 +429,6 @@ class MainWindow:
             entry.sub_entries = self.sort_entries_by_size( entry.sub_entries )
 
         return entries
-
-    def flatten_entries( self, entries ):
-
-        result = []
-
-        for entry in entries:
-
-            if len( entry.sub_entries ) >= 1:
-
-                result += entry.get_flat_sub_entries( 5 )
-
-            else:
-
-                result.append( entry )
-
-        return result
 
     def get_dir_size( self, dir_path ):
 
