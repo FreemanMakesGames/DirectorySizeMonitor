@@ -8,6 +8,8 @@ from unit import Unit
 
 import os
 import platform
+import threading
+import multiprocessing
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as tkfiledialog
@@ -444,7 +446,46 @@ class MainWindow:
 
         dir_size = 0
 
-        for sub_dir_path, sub_dir_names, file_names in os.walk( dir_path ):
+        core_count = multiprocessing.cpu_count()
+
+        # A list of each core's list of os.walk tuple to work on.
+        sub_lists = []
+        # A list of each core's result, which will be a list with 1 value. This is to pass that list as a reference,
+        # And the thread can return the result by appending to that list..
+        result_holders = []
+        for i in range( core_count ):
+            sub_lists.append( [] )
+            result_holders.append( [] )
+
+        i = 0
+        for os_walk_tuple in os.walk( dir_path ):
+            sub_lists[ i % core_count ].append( os_walk_tuple )
+            i += 1
+
+        threads = []
+        for i in range( core_count ):
+            threads.append( threading.Thread( target = self.sum_files_size_threaded,
+                                              args = ( sub_lists[ i ], result_holders[ i ] ) ) )
+
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
+        for result_holder in result_holders:
+            dir_size += result_holder[ 0 ]
+
+        return dir_size
+
+    def sum_files_size_threaded( self, os_walk_partial_results, size_holder ):
+
+        result = 0
+
+        for os_walk_tuple in os_walk_partial_results:
+
+            sub_dir_path = os_walk_tuple[ 0 ]
+            file_names = os_walk_tuple[ 2 ]
 
             for fileName in file_names:
 
@@ -456,9 +497,9 @@ class MainWindow:
                     file_path = "\\\\?\\" + file_path  # A prefix \\?\ for path length over 260 characters
 
                 if not os.path.islink( file_path ):
-                    dir_size += os.path.getsize( file_path )
+                    result += os.path.getsize( file_path )
 
-        return dir_size
+        size_holder.append( result )
 
     def set_current_scan_result( self, root_path, depth, entry_infos ):
 
