@@ -14,6 +14,6 @@ class EntryInfosDisplay( EntryDisplay ):
         for entry_info in i_entries:
 
             super()._insert_entry( parent_key, entry_info.path, "content", indent + entry_info.path,
-                                   "size", str( entry_info.size / unit.divisor ) + unit.postfix )
+                                   "size", super()._get_size_text( entry_info.size, unit ) )
 
             self._insert_entries( entry_info.path, entry_info.sub_entries, depth + 1, unit )

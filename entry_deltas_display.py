@@ -14,7 +14,7 @@ class EntryDeltasDisplay( EntryDisplay ):
         for entry_delta in i_entries:
 
             super()._insert_entry( parent_key, entry_delta.path, "entry", indent + entry_delta.path,
-                                   "delta", str( entry_delta.size / unit.divisor ) + unit.postfix )
+                                   "delta", super()._get_size_text( entry_delta.size, unit ) )
 
             # Assign tag based on delta type, for highlighting.
             if entry_delta.delta_type == EntryDeltaType.NewEntry:

@@ -37,3 +37,31 @@ class EntryDisplay:
         self.treeview.set( path, path_column_name, path_text )
 
         self.treeview.set( path, size_column_name, size_text )
+
+    def _get_size_text( self, size_in_bytes, unit ):
+
+        """ Trim an entry size to have less digits.
+
+        If unit is byte, simply return size concatenated with "B".
+
+        Otherwise, divide size with divisor.
+        If the result's absolute value >= 1, round it to have 1 digit after decimal point.
+        If the result's absolute value is between 0 and 1, round it to have 2 significant digits.
+        """
+
+        if unit.postfix == "B":
+
+            return str( size_in_bytes ) + "B"
+
+        else:
+
+            size_in_unit = size_in_bytes / unit.divisor
+
+            if abs( size_in_unit ) >= 1:
+
+                return str( round( size_in_unit, 1 ) ) + unit.postfix
+
+            else:
+
+                # 2g means to drop digits after 2 significant digits.
+                return "{0:.2g}".format( size_in_unit ) + unit.postfix
