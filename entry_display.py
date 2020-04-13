@@ -22,4 +22,18 @@ class EntryDisplay:
 
     def _insert_entries( self, parent_key, i_entries, depth, unit ):
 
+        """ Insert all entries into the treeview.
+
+        Different displays do it differently."""
+
         raise NotImplementedError
+
+    def _insert_entry( self, parent_key, path, path_column_name, path_text, size_column_name, size_text ):
+
+        """ Insert a single entry into the treeview."""
+
+        self.treeview.insert( parent_key, tk.END, path )
+
+        self.treeview.set( path, path_column_name, path_text )
+
+        self.treeview.set( path, size_column_name, size_text )
