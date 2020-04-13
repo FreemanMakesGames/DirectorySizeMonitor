@@ -32,13 +32,19 @@ class MainWindow:
         self.scan_button = tk.Button( input_frame, text = "Scan", command = self.on_scan_button_clicked )
         self.scan_button.grid( row = 0, column = 0 )
 
-        self.sort_lexically_button = tk.Button( input_frame, text = "Sort Lexically", command = lambda:
-                                                self.on_sort_button_clicked( self.sort_entries_lexically ) )
-        self.sort_lexically_button.grid( row = 0, column = 1 )
+        self.sort_lexically_or_by_size = tk.IntVar()
+        self.sort_lexically_or_by_size.set( 1 )
+        self.sort_lexically_radio_button = tk.Radiobutton( input_frame, text = "Sort Lexically",
+                                                      variable = self.sort_lexically_or_by_size,
+                                                      value = 1, command = lambda:
+                                                      self.on_sort_button_clicked( self.sort_entries_lexically ) )
+        self.sort_lexically_radio_button.grid( row = 0, column = 1 )
 
-        self.sort_by_size_button = tk.Button( input_frame, text = "Sort By Size", command = lambda:
-                                              self.on_sort_button_clicked( self.sort_entries_by_size ) )
-        self.sort_by_size_button.grid( row = 0, column = 2 )
+        self.sort_by_size_radio_button = tk.Radiobutton( input_frame, text = "Sort By Size",
+                                                    variable = self.sort_lexically_or_by_size,
+                                                    value = 2, command = lambda:
+                                                    self.on_sort_button_clicked( self.sort_entries_by_size ) )
+        self.sort_by_size_radio_button.grid( row = 0, column = 2 )
 
         self.save_button = tk.Button( input_frame, text = "Save Result", command = self.save_result )
         self.save_button.grid( row = 0, column = 3 )
