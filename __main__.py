@@ -110,6 +110,11 @@ class MainWindow:
         entry_infos_treeview.heading( "content", text = "Content" )
         entry_infos_treeview.heading( "size", text = "Size" )
         entry_infos_treeview.grid( row = 1, column = 0 )
+        ### Scrollbar
+        entry_infos_display_scrollbar = ttk.Scrollbar( display_frame, orient = "vertical",
+                                                       command = entry_infos_treeview.yview )
+        entry_infos_treeview.config( yscrollcommand = entry_infos_display_scrollbar.set )
+        entry_infos_display_scrollbar.grid( row = 1, column = 1, sticky = tk.NS )
         self.entry_infos_display = EntryInfosDisplay( entry_infos_treeview )
 
         ## Delta tree view
@@ -124,6 +129,11 @@ class MainWindow:
         entry_deltas_treeview.heading( "entry", text = "Entry" )
         entry_deltas_treeview.heading( "delta", text = "Delta" )
         entry_deltas_treeview.grid( row = 3, column = 0 )
+        ### Scrollbar
+        entry_deltas_display_scrollbar = ttk.Scrollbar( display_frame, orient = "vertical",
+                                                        command = entry_deltas_treeview.yview )
+        entry_deltas_treeview.config( yscrollcommand = entry_deltas_display_scrollbar.set )
+        entry_deltas_display_scrollbar.grid( row = 3, column = 1, sticky = tk.NS )
         self.entry_deltas_display = EntryDeltasDisplay( entry_deltas_treeview )
 
         """ Backend """
