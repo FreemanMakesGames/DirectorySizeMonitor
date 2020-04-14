@@ -1,3 +1,5 @@
+from entry_interface import *
+
 import tkinter as tk
 import tkinter.ttk as ttk
 
@@ -15,6 +17,8 @@ class EntryDisplay:
         self.clear()
 
         self._insert_entries( "", i_entries, 1, unit )
+
+        self._highlight_entries()
 
     def clear( self ):
 
@@ -36,10 +40,20 @@ class EntryDisplay:
         """
 
         self.treeview.insert( parent_key, tk.END, entry.path )
-
         self.treeview.set( entry.path, path_column_name, "  " * indent_count + entry.path )
-
         self.treeview.set( entry.path, size_column_name, self._get_size_text( entry.size, unit ) )
+
+        # Blue text for dir
+        if entry.entry_type == EntryType.Dir:
+            self.treeview.item( entry.path, tags = ( "is_dir", ) )
+
+    def _highlight_entries( self ):
+
+        """ Meant for override. Highlight entry rows if it's a dir, is a new or deleted entry, and so on.
+
+        For base class, simply give dir entries blue text."""
+
+        self.treeview.tag_configure( "is_dir", foreground = "#0000ff" )
 
     def _get_size_text( self, size_in_bytes, unit ):
 
