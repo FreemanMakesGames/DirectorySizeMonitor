@@ -28,15 +28,18 @@ class EntryDisplay:
 
         raise NotImplementedError
 
-    def _insert_entry( self, parent_key, path, path_column_name, path_text, size_column_name, size_text ):
+    def _insert_entry( self, parent_key, entry, path_column_name, size_column_name, unit, indent_count ):
 
-        """ Insert a single entry into the treeview."""
+        """ Insert a single entry into the treeview.
+        
+        entry.path will be the "treeview key" of this entry.
+        """
 
-        self.treeview.insert( parent_key, tk.END, path )
+        self.treeview.insert( parent_key, tk.END, entry.path )
 
-        self.treeview.set( path, path_column_name, path_text )
+        self.treeview.set( entry.path, path_column_name, "  " * indent_count + entry.path )
 
-        self.treeview.set( path, size_column_name, size_text )
+        self.treeview.set( entry.path, size_column_name, self._get_size_text( entry.size, unit ) )
 
     def _get_size_text( self, size_in_bytes, unit ):
 

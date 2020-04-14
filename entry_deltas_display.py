@@ -9,12 +9,9 @@ class EntryDeltasDisplay( EntryDisplay ):
 
     def _insert_entries( self, parent_key, i_entries, depth, unit ):
 
-        indent = "    " * ( depth - 1 )
-
         for entry_delta in i_entries:
 
-            super()._insert_entry( parent_key, entry_delta.path, "entry", indent + entry_delta.path,
-                                   "delta", super()._get_size_text( entry_delta.size, unit ) )
+            super()._insert_entry( parent_key, entry_delta, "entry", "delta", unit, depth - 1 )
 
             # Assign tag based on delta type, for highlighting.
             if entry_delta.delta_type == EntryDeltaType.NewEntry:
