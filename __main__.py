@@ -1,5 +1,6 @@
 from entry_info import *
 from entry_delta import *
+from entry_interface import *
 from scan_result import ScanResult
 from entry_infos_display import EntryInfosDisplay
 from entry_deltas_display import EntryDeltasDisplay
@@ -342,11 +343,11 @@ class MainWindow:
         for entry in os.scandir( target_dir_path ):
 
             # Init entry info.
-            entry_info = EntryInfo( target_dir_path + "/" + entry.name, EntryInfoType.Unset, 0, [] )
+            entry_info = EntryInfo( target_dir_path + "/" + entry.name, EntryType.Unset, 0, [] )
 
             if entry.is_file():
 
-                entry_info.entry_type = EntryInfoType.File
+                entry_info.entry_type = EntryType.File
                 entry_info.size = os.path.getsize( entry )
 
                 entry_infos.append( entry_info )
@@ -355,7 +356,7 @@ class MainWindow:
 
             elif entry.is_dir():
 
-                entry_info.entry_type = EntryInfoType.Dir
+                entry_info.entry_type = EntryType.Dir
 
                 # If depth isn't exhausted, recursively get and append all sub-entries,
                 # And get this dir's size simply by summing up sub entries' sizes.
@@ -391,8 +392,10 @@ class MainWindow:
 
                     if current_entry_info.size != loaded_entry_info[ "size" ]:
 
-                        entry_delta_to_append = EntryDelta( current_entry_info.path, EntryDeltaType.SizeDiff,
-                                                            current_entry_info.size - loaded_entry_info[ "size" ], [] )
+                        entry_delta_to_append = EntryDelta\
+                            ( current_entry_info.path, current_entry_info.entry_type,
+                              current_entry_info.size - loaded_entry_info[ "size" ], EntryDeltaType.SizeDiff, [] )
+
                         entry_delta_to_append.sub_entries = self.get_entry_deltas( current_entry_info.sub_entries,
                                                                                    loaded_entry_info[ "sub_entries" ] )
 
@@ -403,8 +406,9 @@ class MainWindow:
             # The entry is newly created.
             if not entry_matches:
 
-                entry_delta_to_append = EntryDelta( current_entry_info.path, EntryDeltaType.NewEntry,
-                                                    current_entry_info.size, [] )
+                entry_delta_to_append = EntryDelta( current_entry_info.path, current_entry_info.entry_type,
+                                                    current_entry_info.size, EntryDeltaType.NewEntry, [] )
+
                 entry_delta_to_append.sub_entries = self.get_entry_deltas( current_entry_info.sub_entries, [] )
 
                 result.append( entry_delta_to_append )
@@ -423,8 +427,10 @@ class MainWindow:
 
             if entry_deleted:
 
-                entry_delta_to_append = EntryDelta( loaded_entry_info[ "path" ], EntryDeltaType.Deleted,
-                                                    -loaded_entry_info[ "size" ], [] )
+                entry_delta_to_append = EntryDelta\
+                    ( loaded_entry_info[ "path" ], EntryType( loaded_entry_info[ "entry_type" ] ),
+                      -loaded_entry_info[ "size" ], EntryDeltaType.Deleted, [] )
+
                 entry_delta_to_append.sub_entries = self.get_entry_deltas( [], loaded_entry_info[ "sub_entries" ] )
 
                 result.append( entry_delta_to_append )

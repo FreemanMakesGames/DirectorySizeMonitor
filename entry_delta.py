@@ -14,8 +14,8 @@ class EntryDelta( IEntry ):
 
     """ How much has the size of an entry at a certain path changed"""
 
-    def __init__( self, path, delta_type, delta, sub_entries ):
+    def __init__( self, path, entry_type, delta, delta_type, sub_entries ):
 
-        super().__init__( path, delta, sub_entries )
+        super().__init__( path, entry_type, delta, sub_entries )
 
         self.delta_type = delta_type
