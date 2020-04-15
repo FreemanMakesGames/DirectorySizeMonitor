@@ -99,9 +99,15 @@ class MainWindow:
         display_frame = tk.Frame( master_frame )
         display_frame.grid( row = 1, column = 0 )
 
+        # Display of root path of current scan
+        self.scanned_root = ""
+        self.scanned_root_label_title = "Root of current scan: "
+        self.scanned_root_label = tk.Label( display_frame, text = self.scanned_root_label_title )
+        self.scanned_root_label.grid( row = 0, column = 0, sticky = tk.W )
+
         ## Entry infos display
         entry_infos_display_label = tk.Label( display_frame, text = "Scan Result" )
-        entry_infos_display_label.grid( row = 0, column = 0, sticky = tk.W )
+        entry_infos_display_label.grid( row = 1, column = 0, sticky = tk.W )
         entry_infos_treeview = ttk.Treeview( display_frame )
         # self.root_tree_view.config( show = ["headings"] )  # Hide the tree.
         entry_infos_treeview.config( columns = ("content", "size") )
@@ -110,17 +116,17 @@ class MainWindow:
         entry_infos_treeview.column( "size", width = 200 )
         entry_infos_treeview.heading( "content", text = "Content" )
         entry_infos_treeview.heading( "size", text = "Size" )
-        entry_infos_treeview.grid( row = 1, column = 0 )
+        entry_infos_treeview.grid( row = 2, column = 0 )
         ### Scrollbar
         entry_infos_display_scrollbar = ttk.Scrollbar( display_frame, orient = "vertical",
                                                        command = entry_infos_treeview.yview )
         entry_infos_treeview.config( yscrollcommand = entry_infos_display_scrollbar.set )
-        entry_infos_display_scrollbar.grid( row = 1, column = 1, sticky = tk.NS )
+        entry_infos_display_scrollbar.grid( row = 2, column = 1, sticky = tk.NS )
         self.entry_infos_display = EntryInfosDisplay( entry_infos_treeview )
 
         ## Delta tree view
         delta_tree_view_label = tk.Label( display_frame, text = "Comparison" )
-        delta_tree_view_label.grid( row = 2, column = 0, sticky = tk.W )
+        delta_tree_view_label.grid( row = 3, column = 0, sticky = tk.W )
         entry_deltas_treeview = ttk.Treeview( display_frame )
         # entry_deltas_treeview.config( show = [ "headings" ] )  # Hide the tree.
         entry_deltas_treeview.config( columns = ( "entry", "delta" ) )
@@ -129,12 +135,12 @@ class MainWindow:
         entry_deltas_treeview.column( "delta", width = 200 )
         entry_deltas_treeview.heading( "entry", text = "Entry" )
         entry_deltas_treeview.heading( "delta", text = "Delta" )
-        entry_deltas_treeview.grid( row = 3, column = 0 )
+        entry_deltas_treeview.grid( row = 4, column = 0 )
         ### Scrollbar
         entry_deltas_display_scrollbar = ttk.Scrollbar( display_frame, orient = "vertical",
                                                         command = entry_deltas_treeview.yview )
         entry_deltas_treeview.config( yscrollcommand = entry_deltas_display_scrollbar.set )
-        entry_deltas_display_scrollbar.grid( row = 3, column = 1, sticky = tk.NS )
+        entry_deltas_display_scrollbar.grid( row = 4, column = 1, sticky = tk.NS )
         self.entry_deltas_display = EntryDeltasDisplay( entry_deltas_treeview )
 
         """ Backend """
@@ -159,6 +165,8 @@ class MainWindow:
         if target_dir_path == "":
             return
 
+        self.scanned_root = target_dir_path
+
         # Get depth.
         input_depth_string = self.scan_depth_entry_box.get()
         if not input_depth_string:  # Empty input
@@ -173,15 +181,18 @@ class MainWindow:
                 tkmessagebox.showerror( "Error", "Scan depth isn't an integer. Depth is set to 1." )
                 self.set_scan_depth( 1 )
 
-        target_entry_infos = self.get_dir_info( target_dir_path, 1 )
+        target_entry_infos = self.get_dir_info( self.scanned_root, 1 )
 
-        self.set_current_scan_result( target_dir_path, self.scan_depth, target_entry_infos )
+        self.set_current_scan_result( self.scanned_root, self.scan_depth, target_entry_infos )
 
         # Display.
+
         if self.hierarchy_or_depth.get() == 1:
             self.display_entries_by_hierarchy()
         else:
             self.display_entries_by_depth()
+
+        self.scanned_root_label.config( text = self.scanned_root_label_title + self.scanned_root + '/' )
 
     def on_sort_button_clicked( self, entries_sorting_function ):
 
@@ -239,13 +250,13 @@ class MainWindow:
 
         self.displayed_entry_infos = self.current_entries_sorting_function( entry_infos )
 
-        self.entry_infos_display.display( self.displayed_entry_infos, self.unit )
+        self.entry_infos_display.display( self.displayed_entry_infos, self.unit, self.scanned_root )
 
     def display_entry_deltas( self, entry_deltas ):
 
         self.displayed_entry_deltas = self.current_entries_sorting_function( entry_deltas )
 
-        self.entry_deltas_display.display( self.displayed_entry_deltas, self.unit )
+        self.entry_deltas_display.display( self.displayed_entry_deltas, self.unit, self.scanned_root )
 
     def clear_all_displays( self ):
 

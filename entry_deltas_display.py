@@ -7,11 +7,12 @@ import tkinter as tk
 
 class EntryDeltasDisplay( EntryDisplay ):
 
-    def _insert_entries( self, parent_key, i_entries, depth, unit ):
+    def _insert_entries( self, parent_key, i_entries, depth, unit, root_path_str_for_trimming ):
 
         for entry_delta in i_entries:
 
-            super()._insert_entry( parent_key, entry_delta, "entry", "delta", unit, depth - 1 )
+            super()._insert_entry( parent_key, entry_delta, "entry", "delta", unit, depth - 1,
+                                   root_path_str_for_trimming )
 
             existing_tags = self.treeview.item( entry_delta.path )[ "tags" ]
 
@@ -21,7 +22,8 @@ class EntryDeltasDisplay( EntryDisplay ):
             elif entry_delta.delta_type == EntryDeltaType.Deleted:
                 self.treeview.item( entry_delta.path, tags = ( existing_tags, ) + ( "deleted", ) )
 
-            self._insert_entries( entry_delta.path, entry_delta.sub_entries, depth + 1, unit )
+            self._insert_entries( entry_delta.path, entry_delta.sub_entries, depth + 1, unit,
+                                  root_path_str_for_trimming )
 
     def _highlight_entries( self ):
 

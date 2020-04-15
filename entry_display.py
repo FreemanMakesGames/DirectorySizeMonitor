@@ -1,5 +1,6 @@
 from entry_interface import *
 
+import os
 import tkinter as tk
 import tkinter.ttk as ttk
 
@@ -12,11 +13,11 @@ class EntryDisplay:
 
         self.treeview = treeview
 
-    def display( self, i_entries, unit ):
+    def display( self, i_entries, unit, root_path_str_for_trimming ):
 
         self.clear()
 
-        self._insert_entries( "", i_entries, 1, unit )
+        self._insert_entries( "", i_entries, 1, unit, root_path_str_for_trimming )
 
         self._highlight_entries()
 
@@ -24,7 +25,7 @@ class EntryDisplay:
 
         self.treeview.delete( *self.treeview.get_children() )
 
-    def _insert_entries( self, parent_key, i_entries, depth, unit ):
+    def _insert_entries( self, parent_key, i_entries, depth, unit, root_path_str_for_trimming ):
 
         """ Insert all entries into the treeview.
 
@@ -32,7 +33,8 @@ class EntryDisplay:
 
         raise NotImplementedError
 
-    def _insert_entry( self, parent_key, entry, path_column_name, size_column_name, unit, indent_count ):
+    def _insert_entry( self, parent_key, entry, path_column_name, size_column_name, unit, indent_count,
+                       root_path_str_for_trimming ):
 
         """ Insert a single entry into the treeview.
         
@@ -40,7 +42,11 @@ class EntryDisplay:
         """
 
         self.treeview.insert( parent_key, tk.END, entry.path )
-        self.treeview.set( entry.path, path_column_name, "  " * indent_count + entry.path )
+
+        trimmed_path = entry.path.replace( root_path_str_for_trimming + '/', "" )
+
+        self.treeview.set( entry.path, path_column_name, "  " * indent_count + trimmed_path )
+
         self.treeview.set( entry.path, size_column_name, self._get_size_text( entry.size, unit ) )
 
         # Blue text for dir
