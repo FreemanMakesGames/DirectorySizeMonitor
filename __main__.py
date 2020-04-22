@@ -460,7 +460,7 @@ class MainWindow:
 
     def sort_entries_by_size( self, entries ):
 
-        entries = sorted( entries, key = lambda item: item.size )
+        entries = sorted( entries, key = lambda item: item.size, reverse = True )
 
         for entry in entries:
 
