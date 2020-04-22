@@ -90,7 +90,7 @@ class MainWindow:
         self.display_depth = tk.IntVar()
         self.display_depth.set( 1 )
         self.display_depth_menu = tk.OptionMenu( input_frame, self.display_depth, *self.display_depth_options,
-                                                 command = self.on_display_depth_selected )
+                                                 command = lambda selected: self.redisplay_all() )
         self.display_depth_menu.config( state = tk.DISABLED )
         self.display_depth_menu.grid( row = 1, column = 7 )
 
@@ -187,10 +187,9 @@ class MainWindow:
 
         # Display.
 
-        if self.hierarchy_or_depth.get() == 1:
-            self.display_entries_by_hierarchy()
-        else:
-            self.display_entries_by_depth()
+        self.current_entry_deltas.clear()
+
+        self.redisplay_all()
 
         self.scanned_root_label.config( text = self.scanned_root_label_title + self.scanned_root + '/' )
 
@@ -200,72 +199,59 @@ class MainWindow:
             tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
             return
 
+        if self.current_entries_sorting_function == entries_sorting_function:
+            return
+
         self.current_entries_sorting_function = entries_sorting_function
 
-        self.display_entry_infos( self.displayed_entry_infos )
-
-        if len( self.displayed_entry_deltas ) > 0:
-            self.display_entry_deltas( self.displayed_entry_deltas )
+        self.redisplay_all()
 
     def on_unit_selected( self, selected ):
 
         self.unit.divisor = 1024 ** self.unit_options.index( selected )
         self.unit.postfix = self.unit_option.get()
 
-        self.display_entry_infos( self.displayed_entry_infos )
-        self.display_entry_deltas( self.displayed_entry_deltas )
-
-    def on_display_depth_selected( self, value ):
-
-        self.display_entries_by_depth()
+        self.redisplay_all()
 
     def on_hierarchy_display_selected( self ):
 
-        # Can't pass self.displayed_entry_infos here, because flattened sub entry infos can't be
-        # Put back to their hierarchy.
-        self.display_entries_by_hierarchy()
+        self.redisplay_all()
 
         self.display_depth_menu.config( state = tk.DISABLED )
 
-    def display_entries_by_hierarchy( self ):
-
-        self.display_entry_infos( self.current_scan_result.entry_infos )
-        self.display_entry_deltas( self.current_entry_deltas )
-
     def on_depth_display_selected( self ):
 
-        self.display_entries_by_depth()
+        self.redisplay_all()
 
         self.display_depth_menu.config( state = tk.NORMAL )
 
-    def display_entries_by_depth( self ):
+    def get_what_to_display( self, entries ):
 
-        self.display_entry_infos( EntryUtils.get_flat_entries( self.current_scan_result.entry_infos,
-                                                               self.display_depth.get() ) )
+        to_display = entries
 
-        self.display_entry_deltas( EntryUtils.get_flat_entries( self.current_entry_deltas,
-                                                                self.display_depth.get() ) )
+        if self.hierarchy_or_depth.get() == 2:
+            to_display = EntryUtils.get_flat_entries( to_display, self.display_depth.get() )
+
+        to_display = self.current_entries_sorting_function( to_display )
+
+        return to_display
 
     def display_entry_infos( self, entry_infos ):
 
-        self.displayed_entry_infos = self.current_entries_sorting_function( entry_infos )
+        self.displayed_entry_infos = self.get_what_to_display( entry_infos )
 
         self.entry_infos_display.display( self.displayed_entry_infos, self.unit, self.scanned_root )
 
     def display_entry_deltas( self, entry_deltas ):
 
-        self.displayed_entry_deltas = self.current_entries_sorting_function( entry_deltas )
+        self.displayed_entry_deltas = self.get_what_to_display( entry_deltas )
 
         self.entry_deltas_display.display( self.displayed_entry_deltas, self.unit, self.scanned_root )
 
-    def clear_all_displays( self ):
+    def redisplay_all( self ):
 
-        self.entry_infos_display.clear()
-        self.entry_deltas_display.clear()
-
-    def clear_tree_view( self, tree_view ):
-
-        tree_view.delete( *tree_view.get_children() )
+        self.display_entry_infos( self.current_scan_result.entry_infos )
+        self.display_entry_deltas( self.current_entry_deltas )
 
     def set_scan_depth( self, target_depth ):
 
