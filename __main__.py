@@ -125,8 +125,8 @@ class MainWindow:
         self.entry_infos_display = EntryInfosDisplay( entry_infos_treeview )
 
         ## Delta tree view
-        delta_tree_view_label = tk.Label( display_frame, text = "Comparison" )
-        delta_tree_view_label.grid( row = 3, column = 0, sticky = tk.W )
+        delta_treeview_label = tk.Label( display_frame, text = "Comparison" )
+        delta_treeview_label.grid( row = 3, column = 0, sticky = tk.W )
         entry_deltas_treeview = ttk.Treeview( display_frame )
         # entry_deltas_treeview.config( show = [ "headings" ] )  # Hide the tree.
         entry_deltas_treeview.config( columns = ( "entry", "delta" ) )
@@ -142,6 +142,23 @@ class MainWindow:
         entry_deltas_treeview.config( yscrollcommand = entry_deltas_display_scrollbar.set )
         entry_deltas_display_scrollbar.grid( row = 4, column = 1, sticky = tk.NS )
         self.entry_deltas_display = EntryDeltasDisplay( entry_deltas_treeview )
+
+        ## Errors tree view
+        errors_treeview_label = tk.Label( display_frame, text = "These files or directories couldn't be accessed:" )
+        errors_treeview_label.grid( row = 5, column = 0, sticky = tk.W )
+        self.errors_treeview = ttk.Treeview( display_frame )
+        self.errors_treeview.config( show = [ "headings" ] )  # Hide the tree.
+        self.errors_treeview.config( columns = ( "entry", "error" ) )
+        self.errors_treeview.column( "entry", width = 600 )
+        self.errors_treeview.column( "error", width = 300 )
+        self.errors_treeview.heading( "entry", text = "Entry" )
+        self.errors_treeview.heading( "error", text = "Error" )
+        self.errors_treeview.grid( row = 6, column = 0 )
+        ### Scrollbar
+        errors_treeview_scrollbar = ttk.Scrollbar( display_frame, orient = "vertical",
+                                                   command = self.errors_treeview.yview )
+        self.errors_treeview.config( yscrollcommand = errors_treeview_scrollbar.set )
+        errors_treeview_scrollbar.grid( row = 6, column = 1, sticky = tk.NS )
 
         """ Backend """
 
@@ -335,43 +352,51 @@ class MainWindow:
         :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
         """
 
-        entry_infos = []
+        try:
 
-        for entry in os.scandir( target_dir_path ):
+            entry_infos = []
 
-            # Init entry info.
-            entry_info = EntryInfo( target_dir_path + "/" + entry.name, EntryType.Unset, 0, [] )
+            for entry in os.scandir( target_dir_path ):
 
-            if entry.is_file():
+                # Init entry info.
+                entry_info = EntryInfo( target_dir_path + "/" + entry.name, EntryType.Unset, 0, [] )
 
-                entry_info.entry_type = EntryType.File
-                entry_info.size = os.path.getsize( entry )
+                if entry.is_file():
 
-                entry_infos.append( entry_info )
+                    entry_info.entry_type = EntryType.File
+                    entry_info.size = os.path.getsize( entry )
 
-                continue
+                    entry_infos.append( entry_info )
 
-            elif entry.is_dir():
+                    continue
 
-                entry_info.entry_type = EntryType.Dir
+                elif entry.is_dir():
 
-                # If depth isn't exhausted, recursively get and append all sub-entries,
-                # And get this dir's size simply by summing up sub entries' sizes.
-                if operating_depth < self.scan_depth:
-                    for sub_entry_info in self.get_dir_info( entry_info.path, operating_depth + 1 ):
-                        entry_info.sub_entries.append( sub_entry_info )
-                        entry_info.size += sub_entry_info.size
-                # If depth is exhausted, just get this dir's size the slow way, which involves os module calls.
+                    entry_info.entry_type = EntryType.Dir
+
+                    # If depth isn't exhausted, recursively get and append all sub-entries,
+                    # And get this dir's size simply by summing up sub entries' sizes.
+                    if operating_depth < self.scan_depth:
+                        for sub_entry_info in self.get_dir_info( entry_info.path, operating_depth + 1 ):
+                            entry_info.sub_entries.append( sub_entry_info )
+                            entry_info.size += sub_entry_info.size
+                    # If depth is exhausted, just get this dir's size the slow way, which involves os module calls.
+                    else:
+                        entry_info.size = self.get_dir_size( entry )
+
+                    entry_infos.append( entry_info )
+
                 else:
-                    entry_info.size = self.get_dir_size( entry )
+                    tkmessagebox.showerror( "Error", entry_info.path + " is neither file nor directory? Aborted." )
+                    return
 
-                entry_infos.append( entry_info )
+            return entry_infos
 
-            else:
-                tkmessagebox.showerror( "Error", entry_info.path + " is neither file nor directory? Aborted." )
-                return
-
-        return entry_infos
+        except PermissionError as e:
+            self.errors_treeview.insert( "", tk.END, target_dir_path )
+            self.errors_treeview.set( target_dir_path, "entry", target_dir_path )
+            self.errors_treeview.set( target_dir_path, "error", e )
+            return []
 
     def get_entry_deltas( self, current_entry_infos, loaded_entry_infos ):
 
@@ -465,9 +490,9 @@ class MainWindow:
 
         for sub_dir_path, sub_dir_names, file_names in os.walk( dir_path ):
 
-            for fileName in file_names:
+            for file_name in file_names:
 
-                file_path = os.path.join( sub_dir_path, fileName )
+                file_path = os.path.join( sub_dir_path, file_name )
 
                 # File path formatting for Windows
                 if platform.system() == "Windows":
@@ -475,7 +500,12 @@ class MainWindow:
                     file_path = "\\\\?\\" + file_path  # A prefix \\?\ for path length over 260 characters
 
                 if not os.path.islink( file_path ):
-                    dir_size += os.path.getsize( file_path )
+                    try:
+                        dir_size += os.path.getsize( file_path )
+                    except OSError as e:
+                        self.errors_treeview.insert( "", tk.END, file_path )
+                        self.errors_treeview.set( file_path, "entry", file_path )
+                        self.errors_treeview.set( file_path, "error", e )
 
         return dir_size
 
