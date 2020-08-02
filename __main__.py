@@ -483,6 +483,7 @@ class MainWindow:
 
         """ Calculate a directory's size.
 
+        This should only be called to get the size of a dir at max depth.
         This is expensive.
         """
 
@@ -490,22 +491,30 @@ class MainWindow:
 
         for sub_dir_path, sub_dir_names, file_names in os.walk( dir_path ):
 
+            # file_names is an exhaustive list of all files under dir_path.
             for file_name in file_names:
 
-                file_path = os.path.join( sub_dir_path, file_name )
+                # On Windows, sub_dir_path part has /, file_name has \
+                # On Unix, it's all /
+                raw_file_path = os.path.join( sub_dir_path, file_name )
+
+                formatted_file_path = raw_file_path
 
                 # File path formatting for Windows
                 if platform.system() == "Windows":
-                    file_path = file_path.replace( "/", "\\" )
-                    file_path = "\\\\?\\" + file_path  # A prefix \\?\ for path length over 260 characters
+                    formatted_file_path = formatted_file_path.replace( "/", "\\" )
+                    # A prefix \\?\ for path length over 260 characters
+                    formatted_file_path = "\\\\?\\" + formatted_file_path
 
-                if not os.path.islink( file_path ):
+                if not os.path.islink( formatted_file_path ):
                     try:
-                        dir_size += os.path.getsize( file_path )
+                        dir_size += os.path.getsize( formatted_file_path )
                     except OSError as e:
-                        self.errors_treeview.insert( "", tk.END, file_path )
-                        self.errors_treeview.set( file_path, "entry", file_path )
-                        self.errors_treeview.set( file_path, "error", e )
+                        # Reverse the slash replacement on Windows.
+                        loggable_file_path = raw_file_path.replace( "\\", "/" )
+                        self.errors_treeview.insert( "", tk.END, loggable_file_path )
+                        self.errors_treeview.set( loggable_file_path, "entry", loggable_file_path )
+                        self.errors_treeview.set( loggable_file_path, "error", e )
 
         return dir_size
 
