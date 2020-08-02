@@ -182,6 +182,9 @@ class MainWindow:
         if target_dir_path == "":
             return
 
+        # Clear errors treeview first, because errors are inserted on the go during the scan.
+        self.errors_treeview.delete( *self.errors_treeview.get_children() )
+
         self.scanned_root = target_dir_path
 
         # Get depth.
@@ -359,12 +362,17 @@ class MainWindow:
             for entry in os.scandir( target_dir_path ):
 
                 # Init entry info.
-                entry_info = EntryInfo( target_dir_path + "/" + entry.name, EntryType.Unset, 0, [] )
+                entry_path = target_dir_path + "/" + entry.name
+                entry_info = EntryInfo( entry_path, EntryType.Unset, 0, [] )
 
                 if entry.is_file():
 
                     entry_info.entry_type = EntryType.File
-                    entry_info.size = os.path.getsize( entry )
+
+                    try:
+                        entry_info.size = os.path.getsize( entry )
+                    except OSError as e:
+                        self.log_error( entry_info.path, e )
 
                     entry_infos.append( entry_info )
 
@@ -392,10 +400,9 @@ class MainWindow:
 
             return entry_infos
 
+        # Catching exception from os.scandir
         except PermissionError as e:
-            self.errors_treeview.insert( "", tk.END, target_dir_path )
-            self.errors_treeview.set( target_dir_path, "entry", target_dir_path )
-            self.errors_treeview.set( target_dir_path, "error", e )
+            self.log_error( target_dir_path, e )
             return []
 
     def get_entry_deltas( self, current_entry_infos, loaded_entry_infos ):
@@ -494,29 +501,42 @@ class MainWindow:
             # file_names is an exhaustive list of all files under dir_path.
             for file_name in file_names:
 
-                # On Windows, sub_dir_path part has /, file_name has \
+                # Before formatting, On Windows, sub_dir_path part has /, file_name has \
                 # On Unix, it's all /
-                raw_file_path = os.path.join( sub_dir_path, file_name )
+                file_path = self.format_path( os.path.join( sub_dir_path, file_name ) )
 
-                formatted_file_path = raw_file_path
-
-                # File path formatting for Windows
-                if platform.system() == "Windows":
-                    formatted_file_path = formatted_file_path.replace( "/", "\\" )
-                    # A prefix \\?\ for path length over 260 characters
-                    formatted_file_path = "\\\\?\\" + formatted_file_path
-
-                if not os.path.islink( formatted_file_path ):
+                if not os.path.islink( file_path ):
                     try:
-                        dir_size += os.path.getsize( formatted_file_path )
+                        dir_size += os.path.getsize( file_path )
                     except OSError as e:
-                        # Reverse the slash replacement on Windows.
-                        loggable_file_path = raw_file_path.replace( "\\", "/" )
-                        self.errors_treeview.insert( "", tk.END, loggable_file_path )
-                        self.errors_treeview.set( loggable_file_path, "entry", loggable_file_path )
-                        self.errors_treeview.set( loggable_file_path, "error", e )
+                        self.log_error( file_path, e )
 
         return dir_size
+
+    def format_path( self, raw_path ):
+
+        # On non-Windows system, it shouldn't need any formatting.
+        if platform.system() != "Windows":
+            return raw_path
+
+        result = raw_path
+        result = result.replace( "/", "\\" )
+        # A prefix \\?\ for path length over 260 characters
+        result = "\\\\?\\" + result
+
+        return result
+
+    def unformat_path( self, formatted_path ):
+
+        # On non-Windows system, there shouldn't be any formatting.
+        if platform.system() != "Windows":
+            return formatted_path
+
+        result = formatted_path
+        result = result.replace( "\\\\?\\", "" )
+        result = result.replace( "\\", "/" )
+
+        return result
 
     def set_current_scan_result( self, root_path, depth, entry_infos ):
 
@@ -528,6 +548,13 @@ class MainWindow:
 
         tkmessagebox.showerror( "Error", "Although the file you opened is of JSON format, it's not saved from this "
                                          "program." )
+
+    # This method won't be needed if entry_display is refactored.
+    def log_error( self, path, error ):
+        raw_path = self.unformat_path( path )
+        self.errors_treeview.insert( "", tk.END, raw_path )
+        self.errors_treeview.set( raw_path, "entry", raw_path )
+        self.errors_treeview.set( raw_path, "error", error )
 
 
 main_window_widget = tk.Tk()

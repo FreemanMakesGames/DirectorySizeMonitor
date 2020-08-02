@@ -9,6 +9,8 @@ class EntryDisplay:
 
     """ An abstract class that displays IEntry's. """
 
+    # TODO: This can be refactored. Maybe take in parameters of column, column names, column widths,
+    #  Hiding tree or not, and so on, and then build the tree inside the class constructor instead?
     def __init__( self, treeview ):
 
         self.treeview = treeview
