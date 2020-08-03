@@ -558,7 +558,8 @@ class MainWindow:
 
 
 main_window_widget = tk.Tk()
-main_window_widget.title( "Folder Size Monitor" )
+main_window_widget.title( "Directory Size Monitor" )
+main_window_widget.resizable( 0, 0 )
 main_window = MainWindow( main_window_widget )
 
 main_window_widget.mainloop()
