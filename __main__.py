@@ -160,6 +160,10 @@ class MainWindow:
         self.errors_treeview.config( yscrollcommand = errors_treeview_scrollbar.set )
         errors_treeview_scrollbar.grid( row = 6, column = 1, sticky = tk.NS )
 
+        # Status label
+        self.status_label = tk.Label( display_frame )
+        self.status_label.grid( row = 7, column = 0, sticky = tk.W )
+
         """ Backend """
 
         self.current_scan_result = ScanResult( "", self.scan_depth, [] )
@@ -183,6 +187,7 @@ class MainWindow:
             return
 
         # Clear errors treeview first, because errors are inserted on the go during the scan.
+        # Not doing so will result in conflicting entries in the treeview.
         self.errors_treeview.delete( *self.errors_treeview.get_children() )
 
         self.scanned_root = target_dir_path
@@ -201,11 +206,17 @@ class MainWindow:
                 tkmessagebox.showerror( "Error", "Scan depth isn't an integer. Depth is set to 1." )
                 self.set_scan_depth( 1 )
 
+        # Display scanning status before the slow scanning, i.e. get_dir_info.
+        # TODO: This doesn't work. Probably because displaying and scanning happen in the same frame?
+        self.status_label.config( text = "Scanning is in progress, please wait..." )
+
         target_entry_infos = self.get_dir_info( self.scanned_root, 1 )
 
         self.set_current_scan_result( self.scanned_root, self.scan_depth, target_entry_infos )
 
         # Display.
+
+        self.status_label.config( text = "" )
 
         self.current_entry_deltas.clear()
 
