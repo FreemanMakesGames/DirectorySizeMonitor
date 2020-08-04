@@ -47,7 +47,7 @@ class EntryDisplay:
 
         trimmed_path = entry.path.replace( root_path_str_for_trimming + '/', "" )
 
-        self.treeview.set( entry.path, path_column_name, "  " * indent_count + trimmed_path )
+        self.treeview.set( entry.path, path_column_name, "--" * indent_count + trimmed_path )
 
         self.treeview.set( entry.path, size_column_name, self._get_size_text( entry.size, unit ) )
 
