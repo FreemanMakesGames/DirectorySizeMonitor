@@ -328,7 +328,7 @@ class MainWindow:
             return
         else:
             if loaded_root_path != self.current_scan_result.root_path:
-                tkmessagebox.showerror( "Error", "The result you loaded isn't describing the same directory of what's"
+                tkmessagebox.showerror( "Error", "The result you loaded isn't describing the same directory of what's "
                                                  "currently displayed." )
                 return
 
@@ -339,8 +339,8 @@ class MainWindow:
             return
         else:
             if loaded_depth != self.current_scan_result.depth:
-                tkmessagebox.showerror( "Error", "The result you loaded is describing the same directory of"
-                                                 "what's currently displayed, but the depth isn't the same."
+                tkmessagebox.showerror( "Error", "The result you loaded is describing the same directory of "
+                                                 "what's currently displayed, but the depth isn't the same. "
                                                  "So it can't be compared." )
                 return
 
