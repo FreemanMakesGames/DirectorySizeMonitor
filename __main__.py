@@ -360,11 +360,18 @@ class MainWindow:
 
         """ Get a directory's info from scratch.
 
-        This is expensive because it calls getDirSize.
-
         :param target_dir_path: A full path name of current directory.
         :return entryNamesAndSizes: A list of pairs of entry name and size, automatically sorted lexically.
         """
+
+        if target_dir_path == "C:/$Recycle.Bin":
+            self.log_error( target_dir_path, "Scanning recycle bin is currently not supported." )
+            return []
+
+        # On Windows, target_dir_path will have / at the end if it's the entire drive like C:/
+        # But no / at the end if it's anything below.
+        if target_dir_path[ -1 : ] != '/':
+            target_dir_path += '/'
 
         try:
 
@@ -373,7 +380,7 @@ class MainWindow:
             for entry in os.scandir( target_dir_path ):
 
                 # Init entry info.
-                entry_path = target_dir_path + "/" + entry.name
+                entry_path = target_dir_path + entry.name
                 entry_info = EntryInfo( entry_path, EntryType.Unset, 0, [] )
 
                 if entry.is_file():
