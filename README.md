@@ -2,7 +2,7 @@
 Directory Size Monitor is a tool that can show the user what are some biggest files and directories on the file system, as well as some biggest size changes of files and directories over a period of time.
 
 # Installation
-Simply download the release.
+Simply download the [latest release](https://github.com/FreemanMakesGames/DirectorySizeMonitor/releases).
 Currently there is only Windows version. It may be a good idea to put it into `C:\Program Files\DirectorySizeMonitor`, and create a desktop shortcut to `DirectorySizeMonitor.exe`.
 
 # Usage
