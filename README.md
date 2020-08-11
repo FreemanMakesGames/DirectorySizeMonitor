@@ -1,4 +1,5 @@
 # Directory Size Monitor
+![Intro screenshot](docs/images/Intro.jpg)
 Directory Size Monitor is a tool that can show the user what are some biggest files and directories on the file system, as well as some biggest size changes of files and directories over a period of time.
 
 # Installation
