@@ -32,9 +32,17 @@ Directory Size Monitor's second feature is examining size changes of files and d
 2. Click "Save Result", which will prompt you to save into a JSON file.
 3. After a period of time, scan the same target directory again, with the same depth.
 4. Click "Load and Compare", and load the file you saved last time.
-The tool will then show you the changes in size of files and directories since last time, as well as new and deleted entries.
+The tool will then show you the size changes of files and directories since last time, as well as new and deleted entries.
+
+# Notes
+1. It can take some time to scan a large directory. The program may appear to have frozen. Simply wait until it's finished.
+2. The program hasn't been benchmarked. Just for reference, it took 6 minutes for my gaming laptop from 2015 to scan its 128GB C drive.
 
 # Errors
-Errors will be reported in the view at the bottom. Currently on Windows, there are 2 known errors.
-1. `WinError 5` This can be solved if you run the program as administrator.
-2. `WinError 1920` Some of these may be solved by running the program as administrator. But a lot cannot. These are probably files or directories that can be accessed only by the "system".
+Errors will be reported in the view at the bottom. Currently on Windows, there are 2 known errors: `WinError 5` and `WinError 1920`. Both are related to permission. Some of them can be solved by running the program as administartor. But lots of them cannot. These are probably files or directories that can be accessed only by the "system".
+
+# Current Limitations
+1. Due to Python's GIL, performance can't be improved with multithreading. Scanning a large directory can take some minutes.
+2. Only a depth of 1 to 5 is supported.
+3. Re-displaying the results will always re-insert all entries into the views. This can be slow for scan results of large directories.
+4. Scanning the recycle bin on Windows isn't supported.
