@@ -44,5 +44,5 @@ Errors will be reported in the view at the bottom. Currently on Windows, there a
 # Current Limitations
 1. Due to Python's GIL, performance can't be improved with multithreading. Scanning a large directory can take some minutes.
 2. Only a depth of 1 to 5 is supported.
-3. Re-displaying the results will always re-insert all entries into the views. This can be slow for scan results of large directories.
+3. Re-displaying the results will always re-insert all entries into the views. This can be slow and take up to a few seconds, for scan results of large directories.
 4. Scanning the recycle bin on Windows isn't supported.
