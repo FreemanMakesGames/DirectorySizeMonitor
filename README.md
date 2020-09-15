@@ -46,3 +46,6 @@ Errors will be reported in the view at the bottom. Currently on Windows, there a
 2. Only a depth of 1 to 5 is supported.
 3. Re-displaying the results will always re-insert all entries into the views. This can be slow and take up to a few seconds, for scan results of large directories.
 4. Scanning the recycle bin on Windows isn't supported.
+
+# Why not just use WinDirStat
+WinDirStat was my initial consideration, when I needed to analyze the sizes of files and directories on my hard drive. However, the source code and download repositories of WinDirStat were so poorly maintained. [People got hacked](https://www.reddit.com/r/sysadmin/comments/4vx839/fosshub_compromised_with_malware_dont_download/) when downloading WinDirStat.
