@@ -41,6 +41,9 @@ The tool will then show you the size changes of files and directories since last
 # Errors
 Errors will be reported in the view at the bottom. Currently on Windows, there are 2 known errors: `WinError 5` and `WinError 1920`. Both are related to permission. Some of them can be solved by running the program as administartor. But lots of them cannot. These are probably files or directories that can be accessed only by the "system".
 
+# Use cases
+There are some use case examples in the wiki [here](https://github.com/FreemanMakesGames/DirectorySizeMonitor/wiki/Use-cases).
+
 # Current Limitations
 1. Due to Python's GIL, performance can't be improved with multithreading. Scanning a large directory can take some minutes.
 2. Only a depth of 1 to 5 is supported.
