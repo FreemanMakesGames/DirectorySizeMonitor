@@ -235,10 +235,6 @@ class MainWindow:
 
     def on_sort_button_clicked( self, entries_sorting_function ):
 
-        if self.current_scan_result.root_path == "":
-            tkmessagebox.showerror( "Error", "You haven't scanned any directory yet." )
-            return
-
         if self.current_entries_sorting_function == entries_sorting_function:
             return
 
