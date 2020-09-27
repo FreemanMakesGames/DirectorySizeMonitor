@@ -21,8 +21,6 @@ This was the original motivation for the project. In Windows's file explorer, di
 ## Scan Depth
 You can enter the depth for a scan. With each added depth, the directories will be further opened up, and have their contents scanned.
 
-Currently only a depth between 1 to 5 is supported.
-
 ## Display Depth
 You can display by hierarchy, which resembles how the file system is usually displayed by OS. Or you can display by depth. Various depths give various granularities. For a hypothetical example, if you scan the C drive with a depth of 5, but display the result with a depth of 1, it'll show that `C:/dir1` is the biggest entry. But if you display with a depth of 2, `C:/dir1` and other directories will be broken up. Maybe now `C:/dir5/file1` is the biggest entry, and nothing from `C:/dir1` ranks high, because `C:/dir1` consists of a lot of small files.
 
@@ -36,7 +34,8 @@ The tool will then show you the size changes of files and directories since last
 
 # Notes
 1. It can take some time to scan a large directory. The program may appear to have frozen. Simply wait until it's finished.
-2. The program hasn't been benchmarked. Just for reference, it took 6 minutes for my gaming laptop from 2015 to scan its 128GB C drive.
+2. If you save the scan result inside the directory you are scanning, it can affect the result of comparison if you are going to scan and compare later! A typical example of this happening is if you scan the C drive, and save the result inside C drive.
+3. The program hasn't been benchmarked. Just for reference, it took 6 minutes for my gaming laptop from 2015 to scan its 128GB C drive.
 
 # Errors
 Errors will be reported in the view at the bottom. Currently on Windows, there are 2 known errors: `WinError 5` and `WinError 1920`. Both are related to permission. Some of them can be solved by running the program as administartor. But lots of them cannot. These are probably files or directories that can be accessed only by the "system".
@@ -46,8 +45,8 @@ There are some use case examples in the wiki [here](https://github.com/FreemanMa
 
 # Current Limitations
 1. Due to Python's GIL, performance can't be improved with multithreading. Scanning a large directory can take some minutes.
-2. Only a depth of 1 to 5 is supported.
-3. Re-displaying the results will always re-insert all entries into the views. This can be slow and take up to a few seconds, for scan results of large directories.
+2. Re-displaying the results will always re-insert all entries into the views. This can be slow and take up to a few seconds, for scan results of large directories.
+3. Saved scan result can be huge.
 4. Scanning the recycle bin on Windows isn't supported.
 
 # Why not just use WinDirStat
