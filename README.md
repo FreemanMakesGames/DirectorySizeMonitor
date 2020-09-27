@@ -48,7 +48,7 @@ There are some use case examples in the wiki [here](https://github.com/FreemanMa
 # Current Limitations
 1. Due to Python's GIL, performance can't be improved with multithreading. Scanning a large directory can take some minutes.
 2. Re-displaying the results will always re-insert all entries into the views. This can be slow and take up to a few seconds, for scan results of large directories.
-3. Saved scan result can be huge.
+3. Saved scan result can be huge. Saving can be slow.
 4. Scanning the recycle bin on Windows isn't supported.
 
 # Why not just use WinDirStat
