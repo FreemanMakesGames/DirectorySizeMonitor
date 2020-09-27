@@ -110,9 +110,14 @@ class MainWindow:
         self.scanned_root_label = tk.Label( display_frame, text = self.scanned_root_label_title )
         self.scanned_root_label.grid( row = 0, column = 0, sticky = tk.W )
 
+        # Display of scan depth
+        self.scan_depth_label_title = "Scan depth: "
+        self.scan_depth_label = tk.Label( display_frame, text = self.scan_depth_label_title )
+        self.scan_depth_label.grid( row = 1, column = 0, sticky = tk.W )
+
         ## Entry infos display
         entry_infos_display_label = tk.Label( display_frame, text = "Scan Result" )
-        entry_infos_display_label.grid( row = 1, column = 0, sticky = tk.W )
+        entry_infos_display_label.grid( row = 2, column = 0, sticky = tk.W )
         entry_infos_treeview = ttk.Treeview( display_frame )
         # self.root_tree_view.config( show = ["headings"] )  # Hide the tree.
         entry_infos_treeview.config( columns = ("content", "size") )
@@ -121,17 +126,17 @@ class MainWindow:
         entry_infos_treeview.column( "size", width = 200 )
         entry_infos_treeview.heading( "content", text = "Content" )
         entry_infos_treeview.heading( "size", text = "Size" )
-        entry_infos_treeview.grid( row = 2, column = 0 )
+        entry_infos_treeview.grid( row = 3, column = 0 )
         ### Scrollbar
         entry_infos_display_scrollbar = ttk.Scrollbar( display_frame, orient = "vertical",
                                                        command = entry_infos_treeview.yview )
         entry_infos_treeview.config( yscrollcommand = entry_infos_display_scrollbar.set )
-        entry_infos_display_scrollbar.grid( row = 2, column = 1, sticky = tk.NS )
+        entry_infos_display_scrollbar.grid( row = 3, column = 1, sticky = tk.NS )
         self.entry_infos_display = EntryInfosDisplay( entry_infos_treeview )
 
         ## Delta tree view
         delta_treeview_label = tk.Label( display_frame, text = "Comparison" )
-        delta_treeview_label.grid( row = 3, column = 0, sticky = tk.W )
+        delta_treeview_label.grid( row = 4, column = 0, sticky = tk.W )
         entry_deltas_treeview = ttk.Treeview( display_frame )
         # entry_deltas_treeview.config( show = [ "headings" ] )  # Hide the tree.
         entry_deltas_treeview.config( columns = ( "entry", "delta" ) )
@@ -140,17 +145,17 @@ class MainWindow:
         entry_deltas_treeview.column( "delta", width = 200 )
         entry_deltas_treeview.heading( "entry", text = "Entry" )
         entry_deltas_treeview.heading( "delta", text = "Delta" )
-        entry_deltas_treeview.grid( row = 4, column = 0 )
+        entry_deltas_treeview.grid( row = 5, column = 0 )
         ### Scrollbar
         entry_deltas_display_scrollbar = ttk.Scrollbar( display_frame, orient = "vertical",
                                                         command = entry_deltas_treeview.yview )
         entry_deltas_treeview.config( yscrollcommand = entry_deltas_display_scrollbar.set )
-        entry_deltas_display_scrollbar.grid( row = 4, column = 1, sticky = tk.NS )
+        entry_deltas_display_scrollbar.grid( row = 5, column = 1, sticky = tk.NS )
         self.entry_deltas_display = EntryDeltasDisplay( entry_deltas_treeview )
 
         ## Errors tree view
         errors_treeview_label = tk.Label( display_frame, text = "These files or directories couldn't be accessed:" )
-        errors_treeview_label.grid( row = 5, column = 0, sticky = tk.W )
+        errors_treeview_label.grid( row = 6, column = 0, sticky = tk.W )
         self.errors_treeview = ttk.Treeview( display_frame )
         self.errors_treeview.config( show = [ "headings" ] )  # Hide the tree.
         self.errors_treeview.config( columns = ( "entry", "error" ) )
@@ -158,16 +163,16 @@ class MainWindow:
         self.errors_treeview.column( "error", width = 300 )
         self.errors_treeview.heading( "entry", text = "Entry" )
         self.errors_treeview.heading( "error", text = "Error" )
-        self.errors_treeview.grid( row = 6, column = 0 )
+        self.errors_treeview.grid( row = 7, column = 0 )
         ### Scrollbar
         errors_treeview_scrollbar = ttk.Scrollbar( display_frame, orient = "vertical",
                                                    command = self.errors_treeview.yview )
         self.errors_treeview.config( yscrollcommand = errors_treeview_scrollbar.set )
-        errors_treeview_scrollbar.grid( row = 6, column = 1, sticky = tk.NS )
+        errors_treeview_scrollbar.grid( row = 7, column = 1, sticky = tk.NS )
 
         # Status label
         self.status_label = tk.Label( display_frame )
-        self.status_label.grid( row = 7, column = 0, sticky = tk.W )
+        self.status_label.grid( row = 8, column = 0, sticky = tk.W )
 
         """ Backend """
 
@@ -226,6 +231,7 @@ class MainWindow:
         self.redisplay_all()
 
         self.scanned_root_label.config( text = self.scanned_root_label_title + self.scanned_root + '/' )
+        self.scan_depth_label.config( text = self.scan_depth_label_title + str( self.scan_depth ) )
 
     def on_sort_button_clicked( self, entries_sorting_function ):
 
@@ -267,29 +273,39 @@ class MainWindow:
 
     def redisplay_all( self ):
 
-        # Get display depth.
+        display_depth = self.access_display_depth_entry_box()
+
+        self.display_entry_infos( self.current_scan_result.entry_infos, display_depth )
+        self.display_entry_deltas( self.current_entry_deltas, display_depth )
+
+    def access_display_depth_entry_box( self ):
+
+        """ Try to read from display depth entry box.
+
+        If the display depth entry box has a valid input, simply return it.
+        Otherwise, pop a message box, adjust entry box's text to a proper value, and return it.
+        """
+
         display_depth_str = self.display_depth_entry_box.get()
         if not display_depth_str:  # Empty input
-            display_depth = 1
             self.set_display_depth_entry_box( 1 )
+            return 1
         else:  # Non-empty input
             try:  # Integer input
                 display_depth = int( display_depth_str )
                 if display_depth < 1:
                     tkmessagebox.showerror( "Error", "Display depth is less than 1. Resetting to 1." )
-                    display_depth = 1
                     self.set_display_depth_entry_box( 1 )
+                    return 1
                 elif display_depth > self.scan_depth:
                     tkmessagebox.showwarning( "Warning", "Display depth exceeds scan depth. Setting to scan depth." )
-                    display_depth = self.scan_depth
-                    self.set_display_depth_entry_box( display_depth )
+                    self.set_display_depth_entry_box( self.scan_depth )
+                    return self.scan_depth
+                return display_depth
             except ValueError:  # Bad input
                 tkmessagebox.showerror( "Error", "Display depth isn't an integer. Resetting to 1." )
-                display_depth = 1
                 self.set_display_depth_entry_box( 1 )
-
-        self.display_entry_infos( self.current_scan_result.entry_infos, display_depth )
-        self.display_entry_deltas( self.current_entry_deltas, display_depth )
+                return 1
 
     def set_scan_depth( self, in_depth ):
 
@@ -366,7 +382,7 @@ class MainWindow:
         self.current_entry_deltas = self.get_entry_deltas( self.current_scan_result.entry_infos, loaded_entry_infos )
 
         # Display.
-        self.display_entry_deltas( self.current_entry_deltas )
+        self.display_entry_deltas( self.current_entry_deltas, self.access_display_depth_entry_box() )
 
     def get_dir_info( self, target_dir_path, operating_depth ):
 
