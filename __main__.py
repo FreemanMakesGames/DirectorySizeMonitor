@@ -83,34 +83,21 @@ class MainWindow:
                                                 command = lambda selected: self.on_unit_selected( selected ) )
         self.unit_options_menu.grid( row = 1, column = 1 )
 
-        ## Depth input
+        ## Scan depth input
         tk.Label( input_frame, text = "Scan Depth" ).grid( row = 1, column = 2 )
         self.scan_depth_entry_box = tk.Entry( input_frame )
         self.scan_depth_entry_box.grid( row = 1, column = 3 )
         self.scan_depth = 1
         self.scan_depth_entry_box.insert( 0, self.scan_depth )
 
-        ## Hierarchical vs. depth display
-        self.hierarchy_or_depth = tk.IntVar()
-        self.hierarchy_or_depth.set( 1 )
-        self.hierarchy_display_radio_button = tk.Radiobutton( input_frame, text = "Display by hierarchy",
-                                                              variable = self.hierarchy_or_depth, value = 1,
-                                                              command = self.on_hierarchy_display_selected )
-        self.depth_display_radio_button = tk.Radiobutton( input_frame, text = "Display by depth",
-                                                          variable = self.hierarchy_or_depth, value = 2,
-                                                          command = self.on_depth_display_selected )
-        self.hierarchy_display_radio_button.grid( row = 1, column = 4 )
-        self.depth_display_radio_button.grid( row = 1, column = 5 )
+        ## Display depth input
+        tk.Label( input_frame, text = "Display Depth" ).grid( row = 1, column = 4 )
+        self.display_depth_entry_box = tk.Entry( input_frame )
+        self.display_depth_entry_box.grid( row = 1, column = 5 )
+        self.display_depth_entry_box.insert( 0, 1 )
 
-        ## Display-by-depth options
-        tk.Label( input_frame, text = "Display Depth" ).grid( row = 1, column = 6 )
-        self.display_depth_options = [ 1, 2, 3, 4, 5 ]
-        self.display_depth = tk.IntVar()
-        self.display_depth.set( 1 )
-        self.display_depth_menu = tk.OptionMenu( input_frame, self.display_depth, *self.display_depth_options,
-                                                 command = lambda selected: self.redisplay_all() )
-        self.display_depth_menu.config( state = tk.DISABLED )
-        self.display_depth_menu.grid( row = 1, column = 7 )
+        ## Redisplay button
+        tk.Button( input_frame, text = "Re-display", command = self.redisplay_all ).grid( row = 1, column = 6 )
 
         # Display
 
@@ -192,8 +179,6 @@ class MainWindow:
 
         self.current_entries_sorting_function = self.sort_entries_lexically
 
-        self.MAXDEPTH = 5
-
     def on_scan_button_clicked( self ):
 
         """This function should be the only place that carries out scanning."""
@@ -217,8 +202,8 @@ class MainWindow:
         else:  # Non-empty input
             try:  # Integer input
                 self.scan_depth = int( input_depth_string )
-                if self.scan_depth < 1 or self.scan_depth > self.MAXDEPTH:
-                    tkmessagebox.showerror( "Error", "Depth can only be between 1 to 5. Resetting to 1." )
+                if self.scan_depth < 1:
+                    tkmessagebox.showerror( "Error", "Depth has to be at least 1. Resetting to 1." )
                     self.set_scan_depth( 1 )
             except ValueError:  # Bad input
                 tkmessagebox.showerror( "Error", "Scan depth isn't an integer. Depth is set to 1." )
@@ -262,51 +247,60 @@ class MainWindow:
 
         self.redisplay_all()
 
-    def on_hierarchy_display_selected( self ):
+    def get_what_to_display( self, entries, display_depth ):
 
-        self.redisplay_all()
-
-        self.display_depth_menu.config( state = tk.DISABLED )
-
-    def on_depth_display_selected( self ):
-
-        self.redisplay_all()
-
-        self.display_depth_menu.config( state = tk.NORMAL )
-
-    def get_what_to_display( self, entries ):
-
-        to_display = entries
-
-        if self.hierarchy_or_depth.get() == 2:
-            to_display = EntryUtils.get_flat_entries( to_display, self.display_depth.get() )
-
+        to_display = EntryUtils.get_flat_entries( entries, display_depth )
         to_display = self.current_entries_sorting_function( to_display )
-
         return to_display
 
-    def display_entry_infos( self, entry_infos ):
+    def display_entry_infos( self, entry_infos, display_depth ):
 
-        self.displayed_entry_infos = self.get_what_to_display( entry_infos )
+        self.displayed_entry_infos = self.get_what_to_display( entry_infos, display_depth )
 
         self.entry_infos_display.display( self.displayed_entry_infos, self.unit, self.scanned_root )
 
-    def display_entry_deltas( self, entry_deltas ):
+    def display_entry_deltas( self, entry_deltas, display_depth ):
 
-        self.displayed_entry_deltas = self.get_what_to_display( entry_deltas )
+        self.displayed_entry_deltas = self.get_what_to_display( entry_deltas, display_depth )
 
         self.entry_deltas_display.display( self.displayed_entry_deltas, self.unit, self.scanned_root )
 
     def redisplay_all( self ):
 
-        self.display_entry_infos( self.current_scan_result.entry_infos )
-        self.display_entry_deltas( self.current_entry_deltas )
+        # Get display depth.
+        display_depth_str = self.display_depth_entry_box.get()
+        if not display_depth_str:  # Empty input
+            display_depth = 1
+            self.set_display_depth_entry_box( 1 )
+        else:  # Non-empty input
+            try:  # Integer input
+                display_depth = int( display_depth_str )
+                if display_depth < 1:
+                    tkmessagebox.showerror( "Error", "Display depth is less than 1. Resetting to 1." )
+                    display_depth = 1
+                    self.set_display_depth_entry_box( 1 )
+                elif display_depth > self.scan_depth:
+                    tkmessagebox.showwarning( "Warning", "Display depth exceeds scan depth. Setting to scan depth." )
+                    display_depth = self.scan_depth
+                    self.set_display_depth_entry_box( display_depth )
+            except ValueError:  # Bad input
+                tkmessagebox.showerror( "Error", "Display depth isn't an integer. Resetting to 1." )
+                display_depth = 1
+                self.set_display_depth_entry_box( 1 )
 
-    def set_scan_depth( self, target_depth ):
+        self.display_entry_infos( self.current_scan_result.entry_infos, display_depth )
+        self.display_entry_deltas( self.current_entry_deltas, display_depth )
 
-        self.scan_depth = target_depth
+    def set_scan_depth( self, in_depth ):
+
+        self.scan_depth = in_depth
         self.scan_depth_entry_box.delete( 0, tk.END )
-        self.scan_depth_entry_box.insert( 0, target_depth )
+        self.scan_depth_entry_box.insert( 0, in_depth )
+
+    def set_display_depth_entry_box( self, in_depth ):
+
+        self.display_depth_entry_box.delete( 0, tk.END )
+        self.display_depth_entry_box.insert( 0, in_depth )
 
     def save_result( self ):
 
