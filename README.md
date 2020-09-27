@@ -35,8 +35,8 @@ Directory Size Monitor's second feature is examining size changes of files and d
 The tool will then show you the size changes of files and directories since last time, as well as new and deleted entries.
 
 # Notes
-1. It can take some time to scan a large directory. The program may appear to have frozen. Simply wait until it's finished.
-2. If you save the scan result inside the directory you are scanning, the result itself will be reflected when you scan and compare later! A typical example of this happening is if you scan the C drive, and save the result inside C drive.
+1. It can take some time to scan a large directory. The program may appear frozen. Simply wait until it's finished.
+2. If you save the scan result inside the directory you are scanning, the result itself will be reflected when you scan and compare later! An example of this happening is if you scan the C drive, and save the result inside C drive.
 3. The program hasn't been benchmarked. Just for reference, it took 6 minutes for my gaming laptop from 2015 to scan its 128GB C drive.
 
 # Errors
