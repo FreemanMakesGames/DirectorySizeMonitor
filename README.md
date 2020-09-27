@@ -40,7 +40,7 @@ The tool will then show you the size changes of files and directories since last
 3. The program hasn't been benchmarked. Just for reference, it took 6 minutes for my gaming laptop from 2015 to scan its 128GB C drive.
 
 # Errors
-Errors will be reported in the view at the bottom. Currently on Windows, there are 2 known errors: `WinError 5` and `WinError 1920`. Both are related to permission. Some of them can be solved by running the program as administartor. But lots of them cannot. These are probably files or directories that can be accessed only by the "system".
+Errors will be reported in the view at the bottom. Currently on Windows, there are 2 known errors: `WinError 5` and `WinError 1920`. Both are related to permission. Some of them can be solved by running the program as administartor. But lots of them cannot. These are probably files or directories that can be accessed only by the "System" user.
 
 # Use cases
 There are some use case examples in the wiki [here](https://github.com/FreemanMakesGames/DirectorySizeMonitor/wiki/Use-cases).
